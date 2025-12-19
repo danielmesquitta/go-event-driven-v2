@@ -46,15 +46,20 @@ func (h Handler) SignUp(u User) error {
 	}
 
 	go func() {
-		if err := h.newsletterClient.AddToNewsletter(u); err != nil {
-			log.Printf("failed to add user to the newsletter: %v", err)
+		for {
+			if err := h.newsletterClient.AddToNewsletter(u); err != nil {
+				log.Printf("failed to add user to the newsletter: %v", err)
+				time.Sleep(1 * time.Second)
+				continue
+			}
+			break
 		}
 	}()
 
 	go func() {
 		for {
-			if err := h.newsletterClient.AddToNewsletter(u); err != nil {
-				log.Printf("failed to add user to the newsletter: %v", err)
+			if err := h.notificationsClient.SendNotification(u); err != nil {
+				log.Printf("failed to send notification: %v", err)
 				time.Sleep(1 * time.Second)
 				continue
 			}
