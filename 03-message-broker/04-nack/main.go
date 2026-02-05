@@ -18,6 +18,35 @@ func ConsumeMessages(sub message.Subscriber, alarmClient AlarmClient) {
 	}
 
 	for msg := range messages {
+		switch string(msg.Payload) {
+		case "1":
+			handleSmokeDetected(msg, alarmClient)
+			continue
 
+		case "0":
+			handleSmokeCleared(msg, alarmClient)
+			continue
+
+		}
 	}
+}
+
+func handleSmokeDetected(msg *message.Message, alarmClient AlarmClient) {
+	err := alarmClient.StartAlarm()
+	if err != nil {
+		msg.Nack()
+		return
+	}
+
+	msg.Ack()
+}
+
+func handleSmokeCleared(msg *message.Message, alarmClient AlarmClient) {
+	err := alarmClient.StopAlarm()
+	if err != nil {
+		msg.Nack()
+		return
+	}
+
+	msg.Ack()
 }
