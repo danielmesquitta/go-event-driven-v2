@@ -6,37 +6,9 @@ import (
 	"tickets/internal/app/pubsub/event"
 	"tickets/internal/domain/entity"
 
-	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/labstack/echo/v4"
 )
-
-type ticketsConfirmationRequest struct {
-	Tickets []string `json:"tickets"`
-}
-
-// Deprecated: Use PostTicketsStatus instead.
-func (h Handler) PostTicketsConfirmation(c echo.Context) error {
-	var request ticketsConfirmationRequest
-	err := c.Bind(&request)
-	if err != nil {
-		return err
-	}
-
-	for _, ticket := range request.Tickets {
-		msg := message.NewMessage(watermill.NewUUID(), []byte(ticket))
-		if err := h.pubsub.Publish(event.TopicIssueReceipt, msg); err != nil {
-			return err
-		}
-
-		msg = message.NewMessage(watermill.NewUUID(), []byte(ticket))
-		if err := h.pubsub.Publish(event.TopicAppendToTracker, msg); err != nil {
-			return err
-		}
-	}
-
-	return c.NoContent(http.StatusOK)
-}
 
 type ticketsStatusRequest struct {
 	Tickets []ticketStatusRequest `json:"tickets"`
@@ -57,35 +29,21 @@ func (h Handler) PostTicketsStatus(c echo.Context) error {
 	}
 
 	for _, ticket := range request.Tickets {
-		issueReceiptEvent := event.IssueReceiptEvent{
-			TicketID: ticket.TicketID,
-			Price:    ticket.Price,
-		}
-		if err := h.publishEvent(event.TopicIssueReceipt, issueReceiptEvent); err != nil {
-			return err
-		}
-
-		appendToTrackerEvent := event.AppendToTrackerEvent{
+		e := event.TicketBookingConfirmed{
+			Header:        event.NewEventHeader(),
 			TicketID:      ticket.TicketID,
 			CustomerEmail: ticket.CustomerEmail,
 			Price:         ticket.Price,
 		}
-		if err := h.publishEvent(event.TopicAppendToTracker, appendToTrackerEvent); err != nil {
+		payload, err := json.Marshal(e)
+		if err != nil {
+			return err
+		}
+		msg := message.NewMessage(e.Header.ID, payload)
+		if err := h.pubsub.Publish(event.TopicTicketBookingConfirmed, msg); err != nil {
 			return err
 		}
 	}
 
 	return c.NoContent(http.StatusOK)
-}
-
-func (h Handler) publishEvent(topic event.Topic, payload any) error {
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
-	msg := message.NewMessage(watermill.NewUUID(), payloadBytes)
-	if err := h.pubsub.Publish(topic, msg); err != nil {
-		return err
-	}
-	return nil
 }

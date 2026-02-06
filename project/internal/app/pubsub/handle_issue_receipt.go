@@ -8,16 +8,16 @@ import (
 )
 
 func (r *Router) handleIssueReceipt(msg *message.Message) error {
-	var issueReceiptEvent event.IssueReceiptEvent
-	err := json.Unmarshal(msg.Payload, &issueReceiptEvent)
+	var e event.TicketBookingConfirmed
+	err := json.Unmarshal(msg.Payload, &e)
 	if err != nil {
 		return err
 	}
 
 	err = r.receiptsService.IssueReceipt(
 		msg.Context(),
-		issueReceiptEvent.TicketID,
-		issueReceiptEvent.Price,
+		e.TicketID,
+		e.Price,
 	)
 	if err != nil {
 		return err

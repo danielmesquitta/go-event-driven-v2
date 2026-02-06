@@ -11,9 +11,14 @@ type PubSub interface {
 	Publish(topic event.Topic, msg *message.Message) error
 
 	AddConsumerHandler(
-		handlerName string,
 		subscribeTopic event.Topic,
 		handlerFunc message.NoPublishHandlerFunc,
+	) *message.Handler
+
+	AddHandler(
+		subscribeTopic event.Topic,
+		publishTopic event.Topic,
+		handlerFunc message.HandlerFunc,
 	) *message.Handler
 
 	Register(ctx context.Context) error

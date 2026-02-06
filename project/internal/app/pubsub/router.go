@@ -31,14 +31,12 @@ func (r *Router) Run(
 	ctx context.Context,
 ) error {
 	r.pubsub.AddConsumerHandler(
-		"HandleIssueReceipt",
-		event.TopicIssueReceipt,
+		event.TopicTicketBookingConfirmed,
 		r.handleIssueReceipt,
 	)
 
 	r.pubsub.AddConsumerHandler(
-		"HandleAppendToTracker",
-		event.TopicAppendToTracker,
+		event.TopicTicketBookingConfirmed,
 		r.handleAppendToTracker,
 	)
 

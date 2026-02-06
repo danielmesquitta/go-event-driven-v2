@@ -2,9 +2,10 @@ package event
 
 import "tickets/internal/domain/entity"
 
-const TopicAppendToTracker Topic = "append-to-tracker"
+const TopicTicketBookingConfirmed Topic = "TicketBookingConfirmed"
 
-type AppendToTrackerEvent struct {
+type TicketBookingConfirmed struct {
+	Header        EventHeader  `json:"header"`
 	TicketID      string       `json:"ticket_id"`
 	CustomerEmail string       `json:"customer_email"`
 	Price         entity.Money `json:"price"`

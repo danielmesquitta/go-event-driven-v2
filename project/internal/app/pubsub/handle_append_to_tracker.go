@@ -8,8 +8,8 @@ import (
 )
 
 func (r *Router) handleAppendToTracker(msg *message.Message) error {
-	var appendToTrackerEvent event.AppendToTrackerEvent
-	err := json.Unmarshal(msg.Payload, &appendToTrackerEvent)
+	var e event.TicketBookingConfirmed
+	err := json.Unmarshal(msg.Payload, &e)
 	if err != nil {
 		return err
 	}
@@ -18,10 +18,10 @@ func (r *Router) handleAppendToTracker(msg *message.Message) error {
 		msg.Context(),
 		"tickets-to-print",
 		[]string{
-			appendToTrackerEvent.TicketID,
-			appendToTrackerEvent.CustomerEmail,
-			appendToTrackerEvent.Price.Amount,
-			appendToTrackerEvent.Price.Currency,
+			e.TicketID,
+			e.CustomerEmail,
+			e.Price.Amount,
+			e.Price.Currency,
 		},
 	)
 	if err != nil {
