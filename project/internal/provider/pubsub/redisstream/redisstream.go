@@ -14,6 +14,7 @@ import (
 type PubSub struct {
 	message.Publisher
 
+	router          *message.Router
 	rdb             *redis.Client
 	spreadsheetAPI  spreadsheet.API
 	receiptsService receipt.Service
@@ -39,6 +40,7 @@ func NewPubSub(
 
 	return &PubSub{
 		Publisher:       publisher,
+		router:          message.NewDefaultRouter(nil),
 		rdb:             rdb,
 		spreadsheetAPI:  spreadsheetAPI,
 		receiptsService: receiptsService,

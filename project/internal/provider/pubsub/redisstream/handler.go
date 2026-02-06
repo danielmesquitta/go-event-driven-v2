@@ -2,72 +2,57 @@ package redisstream
 
 import (
 	"context"
-	"log/slog"
+	"fmt"
 	"tickets/internal/provider/pubsub"
+
+	"github.com/ThreeDotsLabs/watermill/message"
 )
 
-func (p *PubSub) RunHandlers(
+func (p *PubSub) AddConsumerHandler(
+	handlerName string,
+	subscribeTopic string,
+	handlerFunc message.NoPublishHandlerFunc,
+) *message.Handler {
+	sub, err := p.NewSubscriber(fmt.Sprintf("%s-%s-group", handlerName, subscribeTopic))
+	if err != nil {
+		panic(err)
+	}
+
+	return p.router.AddConsumerHandler(handlerName, subscribeTopic, sub, handlerFunc)
+}
+
+func (p *PubSub) RunRouter(
 	ctx context.Context,
 ) error {
-	if err := p.handleIssueReceipt(); err != nil {
-		return err
-	}
+	p.AddConsumerHandler(
+		"HandleIssueReceipt",
+		pubsub.TopicIssueReceipt,
+		p.handleIssueReceipt,
+	)
 
-	if err := p.handleAppendToTracker(); err != nil {
-		return err
-	}
+	p.AddConsumerHandler(
+		"HandleAppendToTracker",
+		pubsub.TopicAppendToTracker,
+		p.handleAppendToTracker,
+	)
 
-	return nil
+	return p.router.Run(ctx)
 }
 
-func (p *PubSub) handleIssueReceipt() error {
-	issueReceiptSub, err := p.NewSubscriber("issue-receipt-group")
+func (p *PubSub) handleIssueReceipt(msg *message.Message) error {
+	ticketID := string(msg.Payload)
+	err := p.receiptsService.IssueReceipt(msg.Context(), ticketID)
 	if err != nil {
 		return err
 	}
-
-	go func() {
-		messages, err := issueReceiptSub.Subscribe(context.Background(), pubsub.TopicIssueReceipt)
-		if err != nil {
-			panic(err)
-		}
-
-		for msg := range messages {
-			ticketID := string(msg.Payload)
-			if err := p.receiptsService.IssueReceipt(msg.Context(), ticketID); err != nil {
-				slog.With("error", err).Error("failed to issue the receipt")
-				msg.Nack()
-			} else {
-				msg.Ack()
-			}
-		}
-	}()
-
 	return nil
 }
 
-func (p *PubSub) handleAppendToTracker() error {
-	appendToTrackerSub, err := p.NewSubscriber("append-to-tracker-group")
+func (p *PubSub) handleAppendToTracker(msg *message.Message) error {
+	ticketID := string(msg.Payload)
+	err := p.spreadsheetAPI.AppendRow(msg.Context(), "tickets-to-print", []string{ticketID})
 	if err != nil {
 		return err
 	}
-
-	go func() {
-		messages, err := appendToTrackerSub.Subscribe(context.Background(), pubsub.TopicAppendToTracker)
-		if err != nil {
-			panic(err)
-		}
-
-		for msg := range messages {
-			ticketID := string(msg.Payload)
-			if err := p.spreadsheetAPI.AppendRow(msg.Context(), "tickets-to-print", []string{ticketID}); err != nil {
-				slog.With("error", err).Error("failed to append to tracker")
-				msg.Nack()
-			} else {
-				msg.Ack()
-			}
-		}
-	}()
-
 	return nil
 }

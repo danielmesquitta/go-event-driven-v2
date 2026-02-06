@@ -11,5 +11,5 @@ type PubSub interface {
 
 	NewSubscriber(consumerGroup string) (message.Subscriber, error)
 
-	RunHandlers(ctx context.Context) error
+	RunRouter(ctx context.Context) error
 }

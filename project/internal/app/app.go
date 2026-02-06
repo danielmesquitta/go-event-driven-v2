@@ -53,12 +53,14 @@ func New() Service {
 }
 
 func (s Service) Run(ctx context.Context) error {
-	err := s.pubsub.RunHandlers(ctx)
-	if err != nil {
-		return err
-	}
+	go func() {
+		err := s.pubsub.RunRouter(ctx)
+		if err != nil {
+			panic(err)
+		}
+	}()
 
-	err = s.echoRouter.Start(":8080")
+	err := s.echoRouter.Start(":8080")
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
