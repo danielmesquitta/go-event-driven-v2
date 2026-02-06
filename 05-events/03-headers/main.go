@@ -2,18 +2,35 @@ package main
 
 import (
 	"encoding/json"
+	"time"
 
-	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/google/uuid"
 )
 
+type EventHeader struct {
+	ID         string `json:"id"`
+	EventName  string `json:"event_name"`
+	OccurredAt string `json:"occurred_at"`
+}
+
+func NewEventHeader(eventName string) EventHeader {
+	return EventHeader{
+		ID:         uuid.NewString(),
+		EventName:  eventName,
+		OccurredAt: time.Now().Format(time.RFC3339),
+	}
+}
+
 type ProductOutOfStock struct {
-	ProductID string `json:"product_id"`
+	Header    EventHeader `json:"header"`
+	ProductID string      `json:"product_id"`
 }
 
 type ProductBackInStock struct {
-	ProductID string `json:"product_id"`
-	Quantity  int    `json:"quantity"`
+	Header    EventHeader `json:"header"`
+	ProductID string      `json:"product_id"`
+	Quantity  int         `json:"quantity"`
 }
 
 type Publisher struct {
@@ -28,6 +45,7 @@ func NewPublisher(pub message.Publisher) Publisher {
 
 func (p Publisher) PublishProductOutOfStock(productID string) error {
 	event := ProductOutOfStock{
+		Header:    NewEventHeader("ProductOutOfStock"),
 		ProductID: productID,
 	}
 
@@ -36,13 +54,14 @@ func (p Publisher) PublishProductOutOfStock(productID string) error {
 		return err
 	}
 
-	msg := message.NewMessage(watermill.NewUUID(), payload)
+	msg := message.NewMessage(event.Header.ID, payload)
 
 	return p.pub.Publish("product-updates", msg)
 }
 
 func (p Publisher) PublishProductBackInStock(productID string, quantity int) error {
 	event := ProductBackInStock{
+		Header:    NewEventHeader("ProductBackInStock"),
 		ProductID: productID,
 		Quantity:  quantity,
 	}
@@ -52,7 +71,7 @@ func (p Publisher) PublishProductBackInStock(productID string, quantity int) err
 		return err
 	}
 
-	msg := message.NewMessage(watermill.NewUUID(), payload)
+	msg := message.NewMessage(event.Header.ID, payload)
 
 	return p.pub.Publish("product-updates", msg)
 }
