@@ -15,6 +15,7 @@ type ticketsConfirmationRequest struct {
 	Tickets []string `json:"tickets"`
 }
 
+// Deprecated: Use PostTicketsStatus instead.
 func (h Handler) PostTicketsConfirmation(c echo.Context) error {
 	var request ticketsConfirmationRequest
 	err := c.Bind(&request)
@@ -56,8 +57,11 @@ func (h Handler) PostTicketsStatus(c echo.Context) error {
 	}
 
 	for _, ticket := range request.Tickets {
-		msg := message.NewMessage(watermill.NewUUID(), []byte(ticket.TicketID))
-		if err := h.pubsub.Publish(event.TopicIssueReceipt, msg); err != nil {
+		issueReceiptEvent := event.IssueReceiptEvent{
+			TicketID: ticket.TicketID,
+			Price:    ticket.Price,
+		}
+		if err := h.publishEvent(event.TopicIssueReceipt, issueReceiptEvent); err != nil {
 			return err
 		}
 
@@ -66,16 +70,22 @@ func (h Handler) PostTicketsStatus(c echo.Context) error {
 			CustomerEmail: ticket.CustomerEmail,
 			Price:         ticket.Price,
 		}
-		appendToTrackerPayload, err := json.Marshal(appendToTrackerEvent)
-		if err != nil {
-			return err
-		}
-
-		msg = message.NewMessage(watermill.NewUUID(), appendToTrackerPayload)
-		if err := h.pubsub.Publish(event.TopicAppendToTracker, msg); err != nil {
+		if err := h.publishEvent(event.TopicAppendToTracker, appendToTrackerEvent); err != nil {
 			return err
 		}
 	}
 
 	return c.NoContent(http.StatusOK)
+}
+
+func (h Handler) publishEvent(topic event.Topic, payload any) error {
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	msg := message.NewMessage(watermill.NewUUID(), payloadBytes)
+	if err := h.pubsub.Publish(topic, msg); err != nil {
+		return err
+	}
+	return nil
 }

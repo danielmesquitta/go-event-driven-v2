@@ -1,10 +1,24 @@
 package pubsub
 
-import "github.com/ThreeDotsLabs/watermill/message"
+import (
+	"encoding/json"
+	"tickets/internal/app/pubsub/event"
+
+	"github.com/ThreeDotsLabs/watermill/message"
+)
 
 func (r *Router) handleIssueReceipt(msg *message.Message) error {
-	ticketID := string(msg.Payload)
-	err := r.receiptsService.IssueReceipt(msg.Context(), ticketID)
+	var issueReceiptEvent event.IssueReceiptEvent
+	err := json.Unmarshal(msg.Payload, &issueReceiptEvent)
+	if err != nil {
+		return err
+	}
+
+	err = r.receiptsService.IssueReceipt(
+		msg.Context(),
+		issueReceiptEvent.TicketID,
+		issueReceiptEvent.Price,
+	)
 	if err != nil {
 		return err
 	}

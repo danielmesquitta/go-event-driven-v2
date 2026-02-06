@@ -8,8 +8,8 @@ import (
 )
 
 func (r *Router) handleAppendToTracker(msg *message.Message) error {
-	var event event.AppendToTrackerEvent
-	err := json.Unmarshal(msg.Payload, &event)
+	var appendToTrackerEvent event.AppendToTrackerEvent
+	err := json.Unmarshal(msg.Payload, &appendToTrackerEvent)
 	if err != nil {
 		return err
 	}
@@ -17,7 +17,12 @@ func (r *Router) handleAppendToTracker(msg *message.Message) error {
 	err = r.spreadsheetAPI.AppendRow(
 		msg.Context(),
 		"tickets-to-print",
-		[]string{event.TicketID, event.CustomerEmail, event.Price.Amount, event.Price.Currency},
+		[]string{
+			appendToTrackerEvent.TicketID,
+			appendToTrackerEvent.CustomerEmail,
+			appendToTrackerEvent.Price.Amount,
+			appendToTrackerEvent.Price.Currency,
+		},
 	)
 	if err != nil {
 		return err
