@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"net/http"
 	"tickets/internal/app/pubsub/event"
 	"tickets/internal/domain/entity"
@@ -60,7 +61,17 @@ func (h Handler) PostTicketsStatus(c echo.Context) error {
 			return err
 		}
 
-		msg = message.NewMessage(watermill.NewUUID(), []byte(ticket.TicketID))
+		appendToTrackerEvent := event.AppendToTrackerEvent{
+			TicketID:      ticket.TicketID,
+			CustomerEmail: ticket.CustomerEmail,
+			Price:         ticket.Price,
+		}
+		appendToTrackerPayload, err := json.Marshal(appendToTrackerEvent)
+		if err != nil {
+			return err
+		}
+
+		msg = message.NewMessage(watermill.NewUUID(), appendToTrackerPayload)
 		if err := h.pubsub.Publish(event.TopicAppendToTracker, msg); err != nil {
 			return err
 		}
