@@ -11,5 +11,7 @@ type PubSub interface {
 
 	NewSubscriber(consumerGroup string) (message.Subscriber, error)
 
-	RunRouter(ctx context.Context) error
+	Register(ctx context.Context) error
+
+	Running() chan struct{}
 }

@@ -6,10 +6,12 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
 
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/sync/errgroup"
 
 	appHTTP "tickets/internal/app/http"
 	"tickets/internal/provider/pubsub"
@@ -53,17 +55,30 @@ func New() Service {
 }
 
 func (s Service) Run(ctx context.Context) error {
-	go func() {
-		err := s.pubsub.RunRouter(ctx)
-		if err != nil {
-			panic(err)
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
+	defer cancel()
+
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		return s.pubsub.Register(ctx)
+	})
+
+	g.Go(func() error {
+		<-s.pubsub.Running()
+
+		err := s.echoRouter.Start(":8080")
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return err
 		}
-	}()
 
-	err := s.echoRouter.Start(":8080")
-	if err != nil && !errors.Is(err, http.ErrServerClosed) {
-		return err
-	}
+		return nil
+	})
 
-	return nil
+	g.Go(func() error {
+		<-ctx.Done()
+		return s.echoRouter.Shutdown(ctx)
+	})
+
+	return g.Wait()
 }

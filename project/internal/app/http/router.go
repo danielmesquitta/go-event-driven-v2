@@ -1,6 +1,8 @@
 package http
 
 import (
+	"net/http"
+
 	"github.com/ThreeDotsLabs/watermill/message"
 
 	libHttp "github.com/ThreeDotsLabs/go-event-driven/v2/common/http"
@@ -16,6 +18,9 @@ func NewHttpRouter(
 		publisher: publisher,
 	}
 
+	e.GET("/health", func(c echo.Context) error {
+		return c.String(http.StatusOK, "ok")
+	})
 	e.POST("/tickets-confirmation", handler.PostTicketsConfirmation)
 
 	return e

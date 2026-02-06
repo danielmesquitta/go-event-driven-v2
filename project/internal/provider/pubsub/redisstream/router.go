@@ -21,7 +21,7 @@ func (p *PubSub) AddConsumerHandler(
 	return p.router.AddConsumerHandler(handlerName, subscribeTopic, sub, handlerFunc)
 }
 
-func (p *PubSub) RunRouter(
+func (p *PubSub) Register(
 	ctx context.Context,
 ) error {
 	p.AddConsumerHandler(
@@ -39,20 +39,6 @@ func (p *PubSub) RunRouter(
 	return p.router.Run(ctx)
 }
 
-func (p *PubSub) handleIssueReceipt(msg *message.Message) error {
-	ticketID := string(msg.Payload)
-	err := p.receiptsService.IssueReceipt(msg.Context(), ticketID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (p *PubSub) handleAppendToTracker(msg *message.Message) error {
-	ticketID := string(msg.Payload)
-	err := p.spreadsheetAPI.AppendRow(msg.Context(), "tickets-to-print", []string{ticketID})
-	if err != nil {
-		return err
-	}
-	return nil
+func (p *PubSub) Running() chan struct{} {
+	return p.router.Running()
 }
