@@ -2,17 +2,17 @@ package event
 
 import "tickets/internal/domain/entity"
 
-const TopicTicketBookingConfirmed Topic = "TicketBookingConfirmed"
+const TopicTicketBookingCanceled Topic = "TicketBookingCanceled"
 
-type TicketBookingConfirmed struct {
+type TicketBookingCanceled struct {
 	Header        EventHeader  `json:"header"`
 	TicketID      string       `json:"ticket_id"`
 	CustomerEmail string       `json:"customer_email"`
 	Price         entity.Money `json:"price"`
 }
 
-func (e *TicketBookingConfirmed) GetHeader() EventHeader {
+func (e *TicketBookingCanceled) GetHeader() EventHeader {
 	return e.Header
 }
 
-var _ Event = (*TicketBookingConfirmed)(nil)
+var _ Event = (*TicketBookingCanceled)(nil)

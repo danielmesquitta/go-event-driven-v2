@@ -7,8 +7,8 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 )
 
-func (r *Router) handleAppendToTracker(msg *message.Message) error {
-	var e event.TicketBookingConfirmed
+func (r *Router) handleAppendCanceledBookingToTracker(msg *message.Message) error {
+	var e event.TicketBookingCanceled
 	err := json.Unmarshal(msg.Payload, &e)
 	if err != nil {
 		return err
@@ -16,7 +16,7 @@ func (r *Router) handleAppendToTracker(msg *message.Message) error {
 
 	err = r.spreadsheetAPI.AppendRow(
 		msg.Context(),
-		"tickets-to-print",
+		"tickets-to-refund",
 		[]string{
 			e.TicketID,
 			e.CustomerEmail,

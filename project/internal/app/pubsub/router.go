@@ -37,7 +37,12 @@ func (r *Router) Run(
 
 	r.pubsub.AddConsumerHandler(
 		event.TopicTicketBookingConfirmed,
-		r.handleAppendToTracker,
+		r.handleAppendConfirmedBookingToTracker,
+	)
+
+	r.pubsub.AddConsumerHandler(
+		event.TopicTicketBookingCanceled,
+		r.handleAppendCanceledBookingToTracker,
 	)
 
 	return r.pubsub.Register(ctx)
