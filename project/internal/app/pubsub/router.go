@@ -16,9 +16,13 @@ type Router struct {
 
 func NewRouter(
 	pubsub pubsub.PubSub,
+	spreadsheetAPI spreadsheet.API,
+	receiptsService receipt.Service,
 ) *Router {
 	return &Router{
-		pubsub: pubsub,
+		pubsub:          pubsub,
+		spreadsheetAPI:  spreadsheetAPI,
+		receiptsService: receiptsService,
 	}
 }
 

@@ -21,7 +21,8 @@ func NewHttpRouter(
 	e.GET("/health", func(c echo.Context) error {
 		return c.String(http.StatusOK, "ok")
 	})
-	e.POST("/tickets-confirmation", handler.PostTicketsConfirmation)
+
+	e.POST("/tickets-status", handler.PostTicketsStatus)
 
 	return e
 }
