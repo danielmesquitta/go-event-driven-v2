@@ -1,4 +1,4 @@
-package pubsub
+package router
 
 import (
 	"context"
@@ -45,7 +45,7 @@ func (r *Router) Run(
 		r.handleAppendCanceledBookingToTracker,
 	)
 
-	return r.pubsub.Register(ctx)
+	return r.pubsub.Run(ctx)
 }
 
 func (r *Router) Running() chan struct{} {

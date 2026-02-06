@@ -1,4 +1,4 @@
-package pubsub
+package router
 
 import (
 	"encoding/json"
@@ -7,17 +7,22 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 )
 
-func (r *Router) handleIssueReceipt(msg *message.Message) error {
+func (r *Router) handleAppendConfirmedBookingToTracker(msg *message.Message) error {
 	var e event.TicketBookingConfirmed
 	err := json.Unmarshal(msg.Payload, &e)
 	if err != nil {
 		return err
 	}
 
-	err = r.receiptsService.IssueReceipt(
+	err = r.spreadsheetAPI.AppendRow(
 		msg.Context(),
-		e.TicketID,
-		e.Price,
+		"tickets-to-print",
+		[]string{
+			e.TicketID,
+			e.CustomerEmail,
+			e.Price.Amount,
+			e.Price.Currency,
+		},
 	)
 	if err != nil {
 		return err

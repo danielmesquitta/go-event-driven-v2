@@ -14,7 +14,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	appHTTP "tickets/internal/app/http"
-	appPubSub "tickets/internal/app/pubsub"
+	"tickets/internal/app/pubsub/router"
 	"tickets/internal/provider/pubsub/redisstream"
 	"tickets/internal/provider/receipt"
 	"tickets/internal/provider/receipt/receiptsvc"
@@ -24,7 +24,7 @@ import (
 
 type Service struct {
 	echoRouter      *echo.Echo
-	pubsubRouter    *appPubSub.Router
+	pubsubRouter    *router.Router
 	spreadsheetsAPI spreadsheet.API
 	receiptsService receipt.Service
 }
@@ -41,7 +41,7 @@ func New() Service {
 	receiptsService := receiptsvc.NewClient(apiClients)
 
 	pubsub := redisstream.NewPubSub()
-	pubsubRouter := appPubSub.NewRouter(pubsub, spreadsheetsAPI, receiptsService)
+	pubsubRouter := router.NewRouter(pubsub, spreadsheetsAPI, receiptsService)
 
 	echoRouter := appHTTP.NewHttpRouter(pubsub)
 

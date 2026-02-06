@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-func (p *PubSub) Register(
+func (p *PubSub) Run(
 	ctx context.Context,
 ) error {
 	return p.router.Run(ctx)
