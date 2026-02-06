@@ -15,6 +15,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-redisstream/pkg/redisstream"
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
@@ -49,6 +50,8 @@ func main() {
 	logger := watermill.NewSlogLogger(nil)
 	router := message.NewDefaultRouter(logger)
 
+	router.AddMiddleware(middleware.CorrelationID)
+
 	rbd := redis.NewClient(&redis.Options{
 		Addr: os.Getenv("REDIS_ADDR"),
 	})
@@ -64,11 +67,17 @@ func main() {
 		Client:        rbd,
 		ConsumerGroup: "PlayerJoined",
 	}, logger)
+	if err != nil {
+		panic(err)
+	}
 
 	subTeamCreated, err := redisstream.NewSubscriber(redisstream.SubscriberConfig{
 		Client:        rbd,
 		ConsumerGroup: "TeamCreated",
 	}, logger)
+	if err != nil {
+		panic(err)
+	}
 
 	client := ScoreboardAPIClient{}
 
@@ -138,8 +147,10 @@ func main() {
 				return err
 			}
 
-			// TODO
-			correlationID := ""
+			correlationID := middleware.MessageCorrelationID(msg)
+			if correlationID == "" {
+				correlationID = uuid.NewString()
+			}
 
 			err = client.CreateTeamScoreboard(event.ID, correlationID)
 			if err != nil {
@@ -193,11 +204,13 @@ func main() {
 			return err
 		}
 
-		// TODO
 		correlationID := c.Request().Header.Get("Correlation-ID")
-		_ = correlationID
+		if correlationID == "" {
+			correlationID = uuid.NewString()
+		}
 
 		msg := message.NewMessage(uuid.NewString(), payload)
+		middleware.SetCorrelationID(correlationID, msg)
 
 		err = pub.Publish("player_joined", msg)
 		if err != nil {
