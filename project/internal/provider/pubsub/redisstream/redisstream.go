@@ -3,8 +3,6 @@ package redisstream
 import (
 	"os"
 	"tickets/internal/provider/pubsub"
-	"tickets/internal/provider/receipt"
-	"tickets/internal/provider/spreadsheet"
 
 	"github.com/ThreeDotsLabs/watermill-redisstream/pkg/redisstream"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -14,16 +12,11 @@ import (
 type PubSub struct {
 	message.Publisher
 
-	router          *message.Router
-	rdb             *redis.Client
-	spreadsheetAPI  spreadsheet.API
-	receiptsService receipt.Service
+	router *message.Router
+	rdb    *redis.Client
 }
 
-func NewPubSub(
-	spreadsheetAPI spreadsheet.API,
-	receiptsService receipt.Service,
-) *PubSub {
+func NewPubSub() *PubSub {
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
 		redisAddr = "localhost:6379"
@@ -39,11 +32,9 @@ func NewPubSub(
 	}
 
 	return &PubSub{
-		Publisher:       publisher,
-		router:          message.NewDefaultRouter(nil),
-		rdb:             rdb,
-		spreadsheetAPI:  spreadsheetAPI,
-		receiptsService: receiptsService,
+		Publisher: publisher,
+		router:    message.NewDefaultRouter(nil),
+		rdb:       rdb,
 	}
 }
 
@@ -53,7 +44,7 @@ func newRedisPublisher(rdb *redis.Client) (message.Publisher, error) {
 	}, nil)
 }
 
-func (p *PubSub) NewSubscriber(consumerGroup string) (message.Subscriber, error) {
+func (p *PubSub) newSubscriber(consumerGroup string) (message.Subscriber, error) {
 	return redisstream.NewSubscriber(redisstream.SubscriberConfig{
 		Client:        p.rdb,
 		ConsumerGroup: consumerGroup,

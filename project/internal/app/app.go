@@ -14,7 +14,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	appHTTP "tickets/internal/app/http"
-	"tickets/internal/provider/pubsub"
+	appPubSub "tickets/internal/app/pubsub"
 	"tickets/internal/provider/pubsub/redisstream"
 	"tickets/internal/provider/receipt"
 	"tickets/internal/provider/receipt/receiptsvc"
@@ -24,7 +24,7 @@ import (
 
 type Service struct {
 	echoRouter      *echo.Echo
-	pubsub          pubsub.PubSub
+	pubsubRouter    *appPubSub.Router
 	spreadsheetsAPI spreadsheet.API
 	receiptsService receipt.Service
 }
@@ -40,13 +40,14 @@ func New() Service {
 	spreadsheetsAPI := spreadsheetapi.NewClient(apiClients)
 	receiptsService := receiptsvc.NewClient(apiClients)
 
-	pubsub := redisstream.NewPubSub(spreadsheetsAPI, receiptsService)
+	pubsub := redisstream.NewPubSub()
+	pubsubRouter := appPubSub.NewRouter(pubsub)
 
 	echoRouter := appHTTP.NewHttpRouter(pubsub.Publisher)
 
 	svc := Service{
 		echoRouter:      echoRouter,
-		pubsub:          pubsub,
+		pubsubRouter:    pubsubRouter,
 		spreadsheetsAPI: spreadsheetsAPI,
 		receiptsService: receiptsService,
 	}
@@ -61,11 +62,11 @@ func (s Service) Run(ctx context.Context) error {
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		return s.pubsub.Register(ctx)
+		return s.pubsubRouter.Run(ctx)
 	})
 
 	g.Go(func() error {
-		<-s.pubsub.Running()
+		<-s.pubsubRouter.Running()
 
 		err := s.echoRouter.Start(":8080")
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
