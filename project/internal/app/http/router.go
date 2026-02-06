@@ -2,20 +2,19 @@ package http
 
 import (
 	"net/http"
-
-	"github.com/ThreeDotsLabs/watermill/message"
+	"tickets/internal/provider/pubsub"
 
 	libHttp "github.com/ThreeDotsLabs/go-event-driven/v2/common/http"
 	"github.com/labstack/echo/v4"
 )
 
 func NewHttpRouter(
-	publisher message.Publisher,
+	pubsub pubsub.PubSub,
 ) *echo.Echo {
 	e := libHttp.NewEcho()
 
 	handler := Handler{
-		publisher: publisher,
+		pubsub: pubsub,
 	}
 
 	e.GET("/health", func(c echo.Context) error {

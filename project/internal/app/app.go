@@ -43,7 +43,7 @@ func New() Service {
 	pubsub := redisstream.NewPubSub()
 	pubsubRouter := appPubSub.NewRouter(pubsub, spreadsheetsAPI, receiptsService)
 
-	echoRouter := appHTTP.NewHttpRouter(pubsub.Publisher)
+	echoRouter := appHTTP.NewHttpRouter(pubsub)
 
 	svc := Service{
 		echoRouter:      echoRouter,

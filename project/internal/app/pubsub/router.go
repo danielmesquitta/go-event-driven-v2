@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"context"
+	"tickets/internal/app/pubsub/event"
 	"tickets/internal/provider/pubsub"
 	"tickets/internal/provider/receipt"
 	"tickets/internal/provider/spreadsheet"
@@ -31,13 +32,13 @@ func (r *Router) Run(
 ) error {
 	r.pubsub.AddConsumerHandler(
 		"HandleIssueReceipt",
-		pubsub.TopicIssueReceipt,
+		event.TopicIssueReceipt,
 		r.handleIssueReceipt,
 	)
 
 	r.pubsub.AddConsumerHandler(
 		"HandleAppendToTracker",
-		pubsub.TopicAppendToTracker,
+		event.TopicAppendToTracker,
 		r.handleAppendToTracker,
 	)
 

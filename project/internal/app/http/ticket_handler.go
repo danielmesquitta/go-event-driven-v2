@@ -2,8 +2,8 @@ package http
 
 import (
 	"net/http"
+	"tickets/internal/app/pubsub/event"
 	"tickets/internal/domain/entity"
-	"tickets/internal/provider/pubsub"
 
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -23,12 +23,12 @@ func (h Handler) PostTicketsConfirmation(c echo.Context) error {
 
 	for _, ticket := range request.Tickets {
 		msg := message.NewMessage(watermill.NewUUID(), []byte(ticket))
-		if err := h.publisher.Publish(pubsub.TopicIssueReceipt, msg); err != nil {
+		if err := h.pubsub.Publish(event.TopicIssueReceipt, msg); err != nil {
 			return err
 		}
 
 		msg = message.NewMessage(watermill.NewUUID(), []byte(ticket))
-		if err := h.publisher.Publish(pubsub.TopicAppendToTracker, msg); err != nil {
+		if err := h.pubsub.Publish(event.TopicAppendToTracker, msg); err != nil {
 			return err
 		}
 	}
@@ -56,12 +56,12 @@ func (h Handler) PostTicketsStatus(c echo.Context) error {
 
 	for _, ticket := range request.Tickets {
 		msg := message.NewMessage(watermill.NewUUID(), []byte(ticket.TicketID))
-		if err := h.publisher.Publish(pubsub.TopicIssueReceipt, msg); err != nil {
+		if err := h.pubsub.Publish(event.TopicIssueReceipt, msg); err != nil {
 			return err
 		}
 
 		msg = message.NewMessage(watermill.NewUUID(), []byte(ticket.TicketID))
-		if err := h.publisher.Publish(pubsub.TopicAppendToTracker, msg); err != nil {
+		if err := h.pubsub.Publish(event.TopicAppendToTracker, msg); err != nil {
 			return err
 		}
 	}

@@ -1,9 +1,7 @@
 package http
 
-import (
-	"github.com/ThreeDotsLabs/watermill/message"
-)
+import "tickets/internal/provider/pubsub"
 
 type Handler struct {
-	publisher message.Publisher
+	pubsub pubsub.PubSub
 }

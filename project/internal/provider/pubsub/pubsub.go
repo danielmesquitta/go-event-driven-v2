@@ -2,16 +2,17 @@ package pubsub
 
 import (
 	"context"
+	"tickets/internal/app/pubsub/event"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 )
 
 type PubSub interface {
-	message.Publisher
+	Publish(topic event.Topic, msg *message.Message) error
 
 	AddConsumerHandler(
 		handlerName string,
-		subscribeTopic string,
+		subscribeTopic event.Topic,
 		handlerFunc message.NoPublishHandlerFunc,
 	) *message.Handler
 

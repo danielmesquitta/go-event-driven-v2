@@ -10,7 +10,7 @@ import (
 )
 
 type PubSub struct {
-	message.Publisher
+	publisher message.Publisher
 
 	router *message.Router
 	rdb    *redis.Client
@@ -32,7 +32,7 @@ func NewPubSub() *PubSub {
 	}
 
 	return &PubSub{
-		Publisher: publisher,
+		publisher: publisher,
 		router:    message.NewDefaultRouter(nil),
 		rdb:       rdb,
 	}
