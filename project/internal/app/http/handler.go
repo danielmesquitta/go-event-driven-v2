@@ -25,7 +25,6 @@ func (h Handler) publishEvent(c echo.Context, topic event.Topic, e event.Event) 
 
 	msg := message.NewMessage(e.GetHeader().ID, payload)
 	msg.Metadata.Set(string(event.MetadataKeyCorrelationID), getCorrelationID(c))
-	msg.Metadata.Set(string(event.MetadataKeyType), string(topic))
 
 	if err := h.pubsub.Publish(topic, msg); err != nil {
 		return err

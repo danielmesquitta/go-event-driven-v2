@@ -24,10 +24,7 @@ func (i *IssueReceipt) Handle(msg *message.Message) error {
 		return errs.ErrInvalidFormat.New(errs.WithMetadata("payload", string(msg.Payload)))
 	}
 
-	eventType := msg.Metadata.Get(string(event.MetadataKeyType))
-	if eventType != string(event.TopicTicketBookingConfirmed) {
-		return errs.ErrInvalidFormat.New(errs.WithMetadata("metadata.type", eventType))
-	}
+	e.SetDefaults()
 
 	err = i.receiptsService.IssueReceipt(
 		msg.Context(),
