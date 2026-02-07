@@ -20,6 +20,11 @@ func Logger(next message.HandlerFunc) message.HandlerFunc {
 
 		logger.Info("Handling a message")
 
-		return next(msg)
+		res, err := next(msg)
+		if err != nil {
+			logger.With("error", err).Error("Error while handling a message")
+		}
+
+		return res, err
 	}
 }
