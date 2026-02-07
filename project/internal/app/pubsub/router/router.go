@@ -35,7 +35,7 @@ func (r *Router) Run(
 ) error {
 	r.pubsub.AddMiddleware(
 		middleware.CorrelationID,
-		pubSubMiddleware.PropagateCorrelationID,
+		pubSubMiddleware.CorrelationID,
 		pubSubMiddleware.Logger,
 	)
 
