@@ -1,12 +1,10 @@
 package http
 
 import (
-	"encoding/json"
 	"net/http"
 	"tickets/internal/app/pubsub/event"
 	"tickets/internal/domain/entity"
 
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/labstack/echo/v4"
 )
 
@@ -56,22 +54,10 @@ func (h Handler) PostTicketsStatus(c echo.Context) error {
 			})
 		}
 
-		if err := h.publishEvent(topic, e); err != nil {
+		if err := h.publishEvent(c, topic, e); err != nil {
 			return err
 		}
 	}
 
 	return c.NoContent(http.StatusOK)
-}
-
-func (h Handler) publishEvent(topic event.Topic, event event.Event) error {
-	payload, err := json.Marshal(event)
-	if err != nil {
-		return err
-	}
-	msg := message.NewMessage(event.GetHeader().ID, payload)
-	if err := h.pubsub.Publish(topic, msg); err != nil {
-		return err
-	}
-	return nil
 }

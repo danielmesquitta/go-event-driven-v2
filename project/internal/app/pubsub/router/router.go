@@ -2,13 +2,12 @@ package router
 
 import (
 	"context"
-	"log/slog"
 	"tickets/internal/app/pubsub/event"
+	pubSubMiddleware "tickets/internal/app/pubsub/middleware"
 	"tickets/internal/provider/pubsub"
 	"tickets/internal/provider/receipt"
 	"tickets/internal/provider/spreadsheet"
 
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 )
 
@@ -34,7 +33,11 @@ func NewRouter(
 func (r *Router) Run(
 	ctx context.Context,
 ) error {
-	r.pubsub.AddMiddleware(middleware.CorrelationID, LogMiddleware)
+	r.pubsub.AddMiddleware(
+		middleware.CorrelationID,
+		pubSubMiddleware.PropagateCorrelationID,
+		pubSubMiddleware.Logger,
+	)
 
 	r.pubsub.AddConsumerHandler(
 		event.TopicTicketBookingConfirmed,
@@ -56,19 +59,4 @@ func (r *Router) Run(
 
 func (r *Router) Running() chan struct{} {
 	return r.pubsub.Running()
-}
-
-func LogMiddleware(next message.HandlerFunc) message.HandlerFunc {
-	return func(msg *message.Message) ([]*message.Message, error) {
-		logger := slog.With(
-			"message_id", msg.UUID,
-			"payload", string(msg.Payload),
-			"metadata", msg.Metadata,
-			"handler", message.HandlerNameFromCtx(msg.Context()),
-		)
-
-		logger.Info("Handling a message")
-
-		return next(msg)
-	}
 }
