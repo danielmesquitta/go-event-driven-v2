@@ -14,16 +14,16 @@ type PubSub interface {
 	// It creates a new consumer group for each handler function.
 	AddConsumerHandler(
 		subscribeTopic event.Topic,
-		handlerFunc message.NoPublishHandlerFunc,
-	) *message.Handler
+		handlerFuncs ...message.NoPublishHandlerFunc,
+	)
 
 	// AddHandler listens to the subscribe topic and sends the message(s) to the publish topic.
 	// It creates a new consumer group for each handler function.
 	AddHandler(
 		subscribeTopic event.Topic,
 		publishTopic event.Topic,
-		handlerFunc message.HandlerFunc,
-	) *message.Handler
+		handlerFuncs ...message.HandlerFunc,
+	)
 
 	// AddMiddleware adds a new middleware to the router.
 	// The order of middleware matters. Middleware added at the beginning is executed first.

@@ -5,18 +5,21 @@ import (
 	"tickets/internal/app/pubsub/event"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/google/uuid"
 )
 
 func (p *PubSub) AddConsumerHandler(
 	subscribeTopic event.Topic,
-	handlerFunc message.NoPublishHandlerFunc,
-) *message.Handler {
-	handlerName := handlerNameFromFunc(handlerFunc)
+	handlerFuncs ...message.NoPublishHandlerFunc,
+) {
+	for _, handlerFunc := range handlerFuncs {
+		id := uuid.NewString()
 
-	sub, err := p.newSubscriber(fmt.Sprintf("%s-%s-group", handlerName, subscribeTopic))
-	if err != nil {
-		panic(err)
+		sub, err := p.newSubscriber(fmt.Sprintf("%s-%s-group", id, subscribeTopic))
+		if err != nil {
+			panic(err)
+		}
+
+		p.router.AddConsumerHandler(id, string(subscribeTopic), sub, handlerFunc)
 	}
-
-	return p.router.AddConsumerHandler(handlerName, string(subscribeTopic), sub, handlerFunc)
 }

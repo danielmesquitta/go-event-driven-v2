@@ -17,14 +17,15 @@ func getCorrelationID(c echo.Context) string {
 	return c.Request().Header.Get("Correlation-ID")
 }
 
-func (h Handler) publishEvent(c echo.Context, topic event.Topic, event event.Event) error {
-	payload, err := json.Marshal(event)
+func (h Handler) publishEvent(c echo.Context, topic event.Topic, e event.Event) error {
+	payload, err := json.Marshal(e)
 	if err != nil {
 		return err
 	}
 
-	msg := message.NewMessage(event.GetHeader().ID, payload)
-	msg.Metadata.Set("correlation_id", getCorrelationID(c))
+	msg := message.NewMessage(e.GetHeader().ID, payload)
+	msg.Metadata.Set(string(event.MetadataKeyCorrelationID), getCorrelationID(c))
+	msg.Metadata.Set(string(event.MetadataKeyType), string(topic))
 
 	if err := h.pubsub.Publish(topic, msg); err != nil {
 		return err

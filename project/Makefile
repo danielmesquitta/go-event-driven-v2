@@ -5,3 +5,7 @@ run:
 .PHONY: up
 up:
 	docker compose up -d
+
+.PHONY: update
+update:
+	@go mod tidy && go get -u ./...

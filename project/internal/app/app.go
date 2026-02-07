@@ -14,6 +14,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	appHTTP "tickets/internal/app/http"
+	"tickets/internal/app/pubsub/handler"
 	"tickets/internal/app/pubsub/router"
 	"tickets/internal/provider/pubsub/redisstream"
 	"tickets/internal/provider/receipt"
@@ -47,7 +48,17 @@ func New() Service {
 	receiptsService := receiptsvc.NewClient(apiClients)
 
 	pubsub := redisstream.NewPubSub()
-	pubsubRouter := router.NewRouter(pubsub, spreadsheetsAPI, receiptsService)
+
+	appendCanceledBookingToTrackerHandler := handler.NewAppendCanceledBookingToTracker(spreadsheetsAPI)
+	appendConfirmedBookingToTrackerHandler := handler.NewAppendConfirmedBookingToTracker(spreadsheetsAPI)
+	issueReceiptHandler := handler.NewIssueReceipt(receiptsService)
+
+	pubsubRouter := router.NewRouter(
+		pubsub,
+		appendCanceledBookingToTrackerHandler,
+		appendConfirmedBookingToTrackerHandler,
+		issueReceiptHandler,
+	)
 
 	echoRouter := appHTTP.NewHttpRouter(pubsub)
 
