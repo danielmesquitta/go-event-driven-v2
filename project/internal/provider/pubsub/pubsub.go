@@ -25,6 +25,10 @@ type PubSub interface {
 		handlerFunc message.HandlerFunc,
 	) *message.Handler
 
+	// AddMiddleware adds a new middleware to the router.
+	// The order of middleware matters. Middleware added at the beginning is executed first.
+	AddMiddleware(m ...message.HandlerMiddleware)
+
 	// Run starts the pubsub system, with all the handlers and consumer handlers registered.
 	// It blocks until the context is cancelled.
 	Run(ctx context.Context) error
