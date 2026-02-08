@@ -12,7 +12,9 @@ type CorrelationPublisherDecorator struct {
 }
 
 func (c CorrelationPublisherDecorator) Publish(topic string, messages ...*message.Message) error {
-	// custom logic here
+	for _, message := range messages {
+		message.Metadata.Set("correlation_id", CorrelationIDFromContext(message.Context()))
+	}
 
 	return c.Publisher.Publish(topic, messages...)
 }
