@@ -3,6 +3,7 @@ package middleware
 import (
 	"log/slog"
 	"tickets/internal/app/pubsub/event"
+	"tickets/internal/provider/eventbus"
 
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -16,7 +17,7 @@ func CorrelationID(next message.HandlerFunc) message.HandlerFunc {
 			correlationID = uuid.NewString()
 		}
 
-		ctx := log.ContextWithCorrelationID(msg.Context(), correlationID)
+		ctx := eventbus.ContextWithCorrelationID(msg.Context(), correlationID)
 		ctx = log.ToContext(ctx, slog.With(string(event.MetadataKeyCorrelationID), correlationID))
 
 		msg.SetContext(ctx)

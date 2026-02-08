@@ -2,11 +2,10 @@ package router
 
 import (
 	"context"
-	"tickets/internal/app/pubsub/event"
 	"tickets/internal/app/pubsub/handler"
 	pubSubMiddleware "tickets/internal/app/pubsub/middleware"
 	"tickets/internal/pkg/log"
-	"tickets/internal/provider/pubsub"
+	"tickets/internal/provider/eventbus"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill"
@@ -14,21 +13,20 @@ import (
 )
 
 type Router struct {
-	pubsub pubsub.PubSub
-
+	eventBus                               eventbus.EventBus
 	appendCanceledBookingToTrackerHandler  *handler.AppendCanceledBookingToTracker
 	appendConfirmedBookingToTrackerHandler *handler.AppendConfirmedBookingToTracker
 	issueReceiptHandler                    *handler.IssueReceipt
 }
 
 func NewRouter(
-	pubsub pubsub.PubSub,
+	eventBus eventbus.EventBus,
 	appendCanceledBookingToTrackerHandler *handler.AppendCanceledBookingToTracker,
 	appendConfirmedBookingToTrackerHandler *handler.AppendConfirmedBookingToTracker,
 	issueReceiptHandler *handler.IssueReceipt,
 ) *Router {
 	return &Router{
-		pubsub:                                 pubsub,
+		eventBus:                               eventBus,
 		appendCanceledBookingToTrackerHandler:  appendCanceledBookingToTrackerHandler,
 		appendConfirmedBookingToTrackerHandler: appendConfirmedBookingToTrackerHandler,
 		issueReceiptHandler:                    issueReceiptHandler,
@@ -46,28 +44,21 @@ func (r *Router) Run(
 		Logger:          watermill.NewSlogLogger(log.FromContext(ctx)),
 	}
 
-	r.pubsub.AddMiddleware(
+	r.eventBus.AddMiddleware(
 		middleware.CorrelationID,
-		retry.Middleware,
 		pubSubMiddleware.CorrelationID,
+		retry.Middleware,
 		pubSubMiddleware.Logger,
 		pubSubMiddleware.ErrorHandler,
 	)
 
-	r.pubsub.AddConsumerHandler(
-		event.TopicTicketBookingConfirmed,
-		r.issueReceiptHandler.Handle,
-		r.appendConfirmedBookingToTrackerHandler.Handle,
-	)
+	eventbus.AddHandler(r.eventBus, r.issueReceiptHandler.Handle)
+	eventbus.AddHandler(r.eventBus, r.appendCanceledBookingToTrackerHandler.Handle)
+	eventbus.AddHandler(r.eventBus, r.appendConfirmedBookingToTrackerHandler.Handle)
 
-	r.pubsub.AddConsumerHandler(
-		event.TopicTicketBookingCanceled,
-		r.appendCanceledBookingToTrackerHandler.Handle,
-	)
-
-	return r.pubsub.Run(ctx)
+	return r.eventBus.Run(ctx)
 }
 
 func (r *Router) Running() chan struct{} {
-	return r.pubsub.Running()
+	return r.eventBus.Running()
 }

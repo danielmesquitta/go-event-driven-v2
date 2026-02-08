@@ -16,7 +16,7 @@ import (
 	appHTTP "tickets/internal/app/http"
 	"tickets/internal/app/pubsub/handler"
 	"tickets/internal/app/pubsub/router"
-	"tickets/internal/provider/pubsub/redisstream"
+	"tickets/internal/provider/eventbus/redisstream"
 	"tickets/internal/provider/receipt"
 	"tickets/internal/provider/receipt/receiptsvc"
 	"tickets/internal/provider/spreadsheet"
@@ -25,7 +25,7 @@ import (
 
 type Service struct {
 	echoRouter      *echo.Echo
-	pubsubRouter    *router.Router
+	router          *router.Router
 	spreadsheetsAPI spreadsheet.API
 	receiptsService receipt.Service
 }
@@ -47,24 +47,24 @@ func New() Service {
 	spreadsheetsAPI := spreadsheetapi.NewClient(apiClients)
 	receiptsService := receiptsvc.NewClient(apiClients)
 
-	pubsub := redisstream.NewPubSub()
+	eventBus := redisstream.NewEventBus()
 
 	appendCanceledBookingToTrackerHandler := handler.NewAppendCanceledBookingToTracker(spreadsheetsAPI)
 	appendConfirmedBookingToTrackerHandler := handler.NewAppendConfirmedBookingToTracker(spreadsheetsAPI)
 	issueReceiptHandler := handler.NewIssueReceipt(receiptsService)
 
-	pubsubRouter := router.NewRouter(
-		pubsub,
+	router := router.NewRouter(
+		eventBus,
 		appendCanceledBookingToTrackerHandler,
 		appendConfirmedBookingToTrackerHandler,
 		issueReceiptHandler,
 	)
 
-	echoRouter := appHTTP.NewHttpRouter(pubsub)
+	echoRouter := appHTTP.NewHttpRouter(eventBus)
 
 	svc := Service{
 		echoRouter:      echoRouter,
-		pubsubRouter:    pubsubRouter,
+		router:          router,
 		spreadsheetsAPI: spreadsheetsAPI,
 		receiptsService: receiptsService,
 	}
@@ -79,11 +79,11 @@ func (s Service) Run(ctx context.Context) error {
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		return s.pubsubRouter.Run(ctx)
+		return s.router.Run(ctx)
 	})
 
 	g.Go(func() error {
-		<-s.pubsubRouter.Running()
+		<-s.router.Running()
 
 		err := s.echoRouter.Start(":8080")
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {

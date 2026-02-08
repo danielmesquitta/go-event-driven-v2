@@ -1,12 +1,9 @@
 package handler
 
 import (
-	"encoding/json"
+	"context"
 	"tickets/internal/app/pubsub/event"
-	"tickets/internal/domain/errs"
 	"tickets/internal/provider/spreadsheet"
-
-	"github.com/ThreeDotsLabs/watermill/message"
 )
 
 type AppendCanceledBookingToTracker struct {
@@ -17,23 +14,15 @@ func NewAppendCanceledBookingToTracker(spreadsheetAPI spreadsheet.API) *AppendCa
 	return &AppendCanceledBookingToTracker{spreadsheetAPI: spreadsheetAPI}
 }
 
-func (a *AppendCanceledBookingToTracker) Handle(msg *message.Message) error {
-	var e event.TicketBookingCanceled
-	err := json.Unmarshal(msg.Payload, &e)
-	if err != nil {
-		return errs.ErrInvalidFormat.New(errs.WithMetadata("payload", string(msg.Payload)))
-	}
-
-	e.SetDefaults()
-
-	err = a.spreadsheetAPI.AppendRow(
-		msg.Context(),
+func (a *AppendCanceledBookingToTracker) Handle(ctx context.Context, event *event.TicketBookingCanceled) error {
+	err := a.spreadsheetAPI.AppendRow(
+		ctx,
 		"tickets-to-refund",
 		[]string{
-			e.TicketID,
-			e.CustomerEmail,
-			e.Price.Amount,
-			e.Price.Currency,
+			event.TicketID,
+			event.CustomerEmail,
+			event.Price.Amount,
+			event.Price.Currency,
 		},
 	)
 	if err != nil {

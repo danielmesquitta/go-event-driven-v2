@@ -12,9 +12,16 @@ type ticketsStatusRequest struct {
 	Tickets []ticketStatusRequest `json:"tickets"`
 }
 
+type ticketStatus string
+
+const (
+	statusConfirmed ticketStatus = "confirmed"
+	statusCanceled  ticketStatus = "canceled"
+)
+
 type ticketStatusRequest struct {
 	TicketID      string       `json:"ticket_id"`
-	Status        string       `json:"status"`
+	Status        ticketStatus `json:"status"`
 	Price         entity.Money `json:"price"`
 	CustomerEmail string       `json:"customer_email"`
 }
@@ -28,10 +35,8 @@ func (h Handler) PostTicketsStatus(c echo.Context) error {
 
 	for _, ticket := range request.Tickets {
 		var e event.Event
-		var topic event.Topic
 		switch ticket.Status {
-		case "confirmed":
-			topic = event.TopicTicketBookingConfirmed
+		case statusConfirmed:
 			e = &event.TicketBookingConfirmed{
 				Header:        event.NewEventHeader(),
 				TicketID:      ticket.TicketID,
@@ -39,8 +44,7 @@ func (h Handler) PostTicketsStatus(c echo.Context) error {
 				Price:         ticket.Price,
 			}
 
-		case "canceled":
-			topic = event.TopicTicketBookingCanceled
+		case statusCanceled:
 			e = &event.TicketBookingCanceled{
 				Header:        event.NewEventHeader(),
 				TicketID:      ticket.TicketID,
@@ -54,7 +58,7 @@ func (h Handler) PostTicketsStatus(c echo.Context) error {
 			})
 		}
 
-		if err := h.publishEvent(c, topic, e); err != nil {
+		if err := publishEvent(c, h.eventBus, e); err != nil {
 			return err
 		}
 	}
