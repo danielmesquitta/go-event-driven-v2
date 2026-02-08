@@ -6,10 +6,15 @@ import (
 )
 
 func NewEventBus(pub message.Publisher) (*cqrs.EventBus, error) {
-	return cqrs.NewEventBusWithConfig(pub, cqrs.EventBusConfig{
-		Marshaler:            cqrs.JSONMarshaler{},
-		GeneratePublishTopic: generatePublishTopic,
-	})
+	return cqrs.NewEventBusWithConfig(
+		pub,
+		cqrs.EventBusConfig{
+			GeneratePublishTopic: generatePublishTopic,
+			Marshaler: cqrs.JSONMarshaler{
+				GenerateName: cqrs.StructName,
+			},
+		},
+	)
 }
 
 func generatePublishTopic(params cqrs.GenerateEventPublishTopicParams) (string, error) {
