@@ -65,3 +65,12 @@ func (h Handler) PostTicketsStatus(c echo.Context) error {
 
 	return c.NoContent(http.StatusOK)
 }
+
+func (h Handler) ListTickets(c echo.Context) error {
+	tickets, err := h.ticketRepo.List(c.Request().Context())
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, tickets)
+}

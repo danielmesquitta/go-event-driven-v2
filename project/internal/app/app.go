@@ -70,7 +70,7 @@ func New() Service {
 		deleteTicketHandler,
 	)
 
-	echoRouter := appHTTP.NewHttpRouter(eventBus)
+	echoRouter := appHTTP.NewHttpRouter(eventBus, ticketRepo)
 
 	svc := Service{
 		db:              db,

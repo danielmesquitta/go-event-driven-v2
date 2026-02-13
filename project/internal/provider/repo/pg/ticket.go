@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 	"tickets/internal/domain/entity"
 	"tickets/internal/provider/db"
 	"tickets/internal/provider/repo"
@@ -59,6 +60,33 @@ func (r *TicketRepo) Get(ctx context.Context, id string) (*entity.Ticket, error)
 		},
 		CustomerEmail: ticket.CustomerEmail,
 	}, nil
+}
+
+func (r *TicketRepo) List(ctx context.Context) ([]entity.Ticket, error) {
+	var tickets []Ticket
+	err := r.db.DB.SelectContext(ctx, &tickets, `
+		SELECT ticket_id, price_amount, price_currency, customer_email
+		FROM tickets
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list tickets: %w", err)
+	}
+
+	entities := make([]entity.Ticket, len(tickets))
+	for i, ticket := range tickets {
+		entities[i] = entity.Ticket{
+			ID: ticket.ID,
+			Price: entity.Money{
+				Amount:   ticket.PriceAmount,
+				Currency: ticket.PriceCurrency,
+			},
+			CustomerEmail: ticket.CustomerEmail,
+		}
+	}
+
+	slog.InfoContext(ctx, "tickets", "tickets", entities)
+
+	return entities, nil
 }
 
 func (r *TicketRepo) Delete(ctx context.Context, id string) error {
