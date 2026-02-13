@@ -20,6 +20,7 @@ import (
 	"tickets/internal/provider/eventbus/redisstream"
 	"tickets/internal/provider/receipt"
 	"tickets/internal/provider/receipt/receiptsvc"
+	"tickets/internal/provider/repo/pg"
 	"tickets/internal/provider/spreadsheet"
 	"tickets/internal/provider/spreadsheet/spreadsheetapi"
 )
@@ -47,6 +48,7 @@ func New() Service {
 	}
 
 	db := db.NewDB()
+	ticketRepo := pg.NewTicketRepo(db)
 
 	spreadsheetsAPI := spreadsheetapi.NewClient(apiClients)
 	receiptsService := receiptsvc.NewClient(apiClients)
@@ -56,12 +58,16 @@ func New() Service {
 	appendCanceledBookingToTrackerHandler := handler.NewAppendCanceledBookingToTracker(spreadsheetsAPI)
 	appendConfirmedBookingToTrackerHandler := handler.NewAppendConfirmedBookingToTracker(spreadsheetsAPI)
 	issueReceiptHandler := handler.NewIssueReceipt(receiptsService)
+	createTicketHandler := handler.NewCreateTicket(ticketRepo)
+	deleteTicketHandler := handler.NewDeleteTicket(ticketRepo)
 
 	router := router.NewRouter(
 		eventBus,
 		appendCanceledBookingToTrackerHandler,
 		appendConfirmedBookingToTrackerHandler,
 		issueReceiptHandler,
+		createTicketHandler,
+		deleteTicketHandler,
 	)
 
 	echoRouter := appHTTP.NewHttpRouter(eventBus)

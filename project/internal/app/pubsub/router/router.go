@@ -17,6 +17,8 @@ type Router struct {
 	appendCanceledBookingToTrackerHandler  *handler.AppendCanceledBookingToTracker
 	appendConfirmedBookingToTrackerHandler *handler.AppendConfirmedBookingToTracker
 	issueReceiptHandler                    *handler.IssueReceipt
+	createTicketHandler                    *handler.CreateTicket
+	deleteTicketHandler                    *handler.DeleteTicket
 }
 
 func NewRouter(
@@ -24,12 +26,16 @@ func NewRouter(
 	appendCanceledBookingToTrackerHandler *handler.AppendCanceledBookingToTracker,
 	appendConfirmedBookingToTrackerHandler *handler.AppendConfirmedBookingToTracker,
 	issueReceiptHandler *handler.IssueReceipt,
+	createTicketHandler *handler.CreateTicket,
+	deleteTicketHandler *handler.DeleteTicket,
 ) *Router {
 	return &Router{
 		eventBus:                               eventBus,
 		appendCanceledBookingToTrackerHandler:  appendCanceledBookingToTrackerHandler,
 		appendConfirmedBookingToTrackerHandler: appendConfirmedBookingToTrackerHandler,
 		issueReceiptHandler:                    issueReceiptHandler,
+		createTicketHandler:                    createTicketHandler,
+		deleteTicketHandler:                    deleteTicketHandler,
 	}
 }
 
@@ -52,9 +58,14 @@ func (r *Router) Run(
 		pubSubMiddleware.ErrorHandler,
 	)
 
+	// Ticket booking canceled
 	eventbus.AddHandler(r.eventBus, r.issueReceiptHandler.Handle)
+	eventbus.AddHandler(r.eventBus, r.deleteTicketHandler.Handle)
+
+	// Ticket booking confirmed
 	eventbus.AddHandler(r.eventBus, r.appendCanceledBookingToTrackerHandler.Handle)
 	eventbus.AddHandler(r.eventBus, r.appendConfirmedBookingToTrackerHandler.Handle)
+	eventbus.AddHandler(r.eventBus, r.createTicketHandler.Handle)
 
 	return r.eventBus.Run(ctx)
 }
