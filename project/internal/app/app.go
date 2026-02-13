@@ -16,6 +16,7 @@ import (
 	appHTTP "tickets/internal/app/http"
 	"tickets/internal/app/pubsub/handler"
 	"tickets/internal/app/pubsub/router"
+	"tickets/internal/provider/db"
 	"tickets/internal/provider/eventbus/redisstream"
 	"tickets/internal/provider/receipt"
 	"tickets/internal/provider/receipt/receiptsvc"
@@ -24,6 +25,7 @@ import (
 )
 
 type Service struct {
+	db              *db.DB
 	echoRouter      *echo.Echo
 	router          *router.Router
 	spreadsheetsAPI spreadsheet.API
@@ -44,6 +46,8 @@ func New() Service {
 		panic(err)
 	}
 
+	db := db.NewDB()
+
 	spreadsheetsAPI := spreadsheetapi.NewClient(apiClients)
 	receiptsService := receiptsvc.NewClient(apiClients)
 
@@ -63,6 +67,7 @@ func New() Service {
 	echoRouter := appHTTP.NewHttpRouter(eventBus)
 
 	svc := Service{
+		db:              db,
 		echoRouter:      echoRouter,
 		router:          router,
 		spreadsheetsAPI: spreadsheetsAPI,
@@ -77,6 +82,10 @@ func (s Service) Run(ctx context.Context) error {
 	defer cancel()
 
 	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		return s.db.InitializeSchema(ctx)
+	})
 
 	g.Go(func() error {
 		return s.router.Run(ctx)
