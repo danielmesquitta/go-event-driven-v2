@@ -3,23 +3,22 @@ package handler
 import (
 	"context"
 	"tickets/internal/app/pubsub/event"
-	"tickets/internal/provider/receipt"
+	"tickets/internal/domain/usecase"
 )
 
 type IssueReceipt struct {
-	receiptsService receipt.Service
+	issueReceiptUseCase *usecase.IssueReceipt
 }
 
-func NewIssueReceipt(receiptsService receipt.Service) *IssueReceipt {
-	return &IssueReceipt{receiptsService: receiptsService}
+func NewIssueReceipt(issueReceiptUseCase *usecase.IssueReceipt) *IssueReceipt {
+	return &IssueReceipt{issueReceiptUseCase: issueReceiptUseCase}
 }
 
 func (i *IssueReceipt) Handle(ctx context.Context, event *event.TicketBookingConfirmed) error {
-	err := i.receiptsService.IssueReceipt(
-		ctx,
-		event.TicketID,
-		event.Price,
-	)
+	err := i.issueReceiptUseCase.Execute(ctx, usecase.IssueReceiptInput{
+		TicketID: event.TicketID,
+		Price:    event.Price,
+	})
 	if err != nil {
 		return err
 	}

@@ -2,11 +2,26 @@ package http
 
 import (
 	"net/http"
-	"tickets/internal/app/pubsub/event"
 	"tickets/internal/domain/entity"
+	"tickets/internal/domain/usecase"
 
 	"github.com/labstack/echo/v4"
 )
+
+type TicketHandler struct {
+	postTicketStatusUseCase *usecase.PostTicketStatus
+	listTicketsUseCase      *usecase.ListTickets
+}
+
+func NewTicketHandler(
+	postTicketStatusUseCase *usecase.PostTicketStatus,
+	listTicketsUseCase *usecase.ListTickets,
+) *TicketHandler {
+	return &TicketHandler{
+		postTicketStatusUseCase: postTicketStatusUseCase,
+		listTicketsUseCase:      listTicketsUseCase,
+	}
+}
 
 type ticketsStatusRequest struct {
 	Tickets []ticketStatusRequest `json:"tickets"`
@@ -26,48 +41,36 @@ type ticketStatusRequest struct {
 	CustomerEmail string       `json:"customer_email"`
 }
 
-func (h Handler) PostTicketsStatus(c echo.Context) error {
-	var request ticketsStatusRequest
-	err := c.Bind(&request)
+func (h TicketHandler) PostTicketsStatus(c echo.Context) error {
+	var req ticketsStatusRequest
+	err := c.Bind(&req)
 	if err != nil {
 		return err
 	}
 
-	for _, ticket := range request.Tickets {
-		var e event.Event
-		switch ticket.Status {
-		case statusConfirmed:
-			e = &event.TicketBookingConfirmed{
-				Header:        event.NewEventHeader(),
-				TicketID:      ticket.TicketID,
-				CustomerEmail: ticket.CustomerEmail,
-				Price:         ticket.Price,
-			}
-
-		case statusCanceled:
-			e = &event.TicketBookingCanceled{
-				Header:        event.NewEventHeader(),
-				TicketID:      ticket.TicketID,
-				CustomerEmail: ticket.CustomerEmail,
-				Price:         ticket.Price,
-			}
-
-		default:
-			return c.JSON(http.StatusBadRequest, map[string]string{
-				"error": "invalid status",
-			})
+	tickets := make([]entity.Ticket, len(req.Tickets))
+	for i, ticket := range req.Tickets {
+		tickets[i] = entity.Ticket{
+			ID:            ticket.TicketID,
+			Status:        entity.TicketStatus(ticket.Status),
+			Price:         ticket.Price,
+			CustomerEmail: ticket.CustomerEmail,
 		}
+	}
 
-		if err := publishEvent(c, h.eventBus, e); err != nil {
-			return err
-		}
+	err = h.postTicketStatusUseCase.Execute(c.Request().Context(), usecase.PostTicketStatusInput{
+		CorrelationID: getCorrelationID(c),
+		Tickets:       tickets,
+	})
+	if err != nil {
+		return err
 	}
 
 	return c.NoContent(http.StatusOK)
 }
 
-func (h Handler) ListTickets(c echo.Context) error {
-	tickets, err := h.ticketRepo.List(c.Request().Context())
+func (h TicketHandler) ListTickets(c echo.Context) error {
+	tickets, err := h.listTicketsUseCase.Execute(c.Request().Context())
 	if err != nil {
 		return err
 	}

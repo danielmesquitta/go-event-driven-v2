@@ -16,6 +16,7 @@ import (
 	appHTTP "tickets/internal/app/http"
 	"tickets/internal/app/pubsub/handler"
 	"tickets/internal/app/pubsub/router"
+	"tickets/internal/domain/usecase"
 	"tickets/internal/provider/db"
 	"tickets/internal/provider/eventbus/redisstream"
 	"tickets/internal/provider/receipt"
@@ -55,11 +56,20 @@ func New() Service {
 
 	eventBus := redisstream.NewEventBus()
 
-	appendCanceledBookingToTrackerHandler := handler.NewAppendCanceledBookingToTracker(spreadsheetsAPI)
-	appendConfirmedBookingToTrackerHandler := handler.NewAppendConfirmedBookingToTracker(spreadsheetsAPI)
-	issueReceiptHandler := handler.NewIssueReceipt(receiptsService)
-	createTicketHandler := handler.NewCreateTicket(ticketRepo)
-	deleteTicketHandler := handler.NewDeleteTicket(ticketRepo)
+	appendCanceledBookingToTrackerUseCase := usecase.NewAppendCanceledBookingToTracker(spreadsheetsAPI)
+	appendCanceledBookingToTrackerHandler := handler.NewAppendCanceledBookingToTracker(appendCanceledBookingToTrackerUseCase)
+
+	appendConfirmedBookingToTrackerUseCase := usecase.NewAppendConfirmedBookingToTracker(spreadsheetsAPI)
+	appendConfirmedBookingToTrackerHandler := handler.NewAppendConfirmedBookingToTracker(appendConfirmedBookingToTrackerUseCase)
+
+	issueReceiptUseCase := usecase.NewIssueReceipt(receiptsService)
+	issueReceiptHandler := handler.NewIssueReceipt(issueReceiptUseCase)
+
+	createTicketUseCase := usecase.NewCreateTicket(ticketRepo)
+	createTicketHandler := handler.NewCreateTicket(createTicketUseCase)
+
+	deleteTicketUseCase := usecase.NewDeleteTicket(ticketRepo)
+	deleteTicketHandler := handler.NewDeleteTicket(deleteTicketUseCase)
 
 	router := router.NewRouter(
 		eventBus,
@@ -70,7 +80,13 @@ func New() Service {
 		deleteTicketHandler,
 	)
 
-	echoRouter := appHTTP.NewHttpRouter(eventBus, ticketRepo)
+	postTicketStatusUseCase := usecase.NewPostTicketStatus(eventBus)
+	listTicketsUseCase := usecase.NewListTickets(ticketRepo)
+
+	echoRouter := appHTTP.NewHttpRouter(
+		postTicketStatusUseCase,
+		listTicketsUseCase,
+	)
 
 	svc := Service{
 		db:              db,

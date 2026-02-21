@@ -3,26 +3,28 @@ package handler
 import (
 	"context"
 	"tickets/internal/app/pubsub/event"
-	"tickets/internal/provider/spreadsheet"
+	"tickets/internal/domain/usecase"
 )
 
 type AppendConfirmedBookingToTracker struct {
-	spreadsheetAPI spreadsheet.API
+	appendConfirmedBookingToTrackerUseCase *usecase.AppendConfirmedBookingToTracker
 }
 
-func NewAppendConfirmedBookingToTracker(spreadsheetAPI spreadsheet.API) *AppendConfirmedBookingToTracker {
-	return &AppendConfirmedBookingToTracker{spreadsheetAPI: spreadsheetAPI}
+func NewAppendConfirmedBookingToTracker(
+	appendConfirmedBookingToTrackerUseCase *usecase.AppendConfirmedBookingToTracker,
+) *AppendConfirmedBookingToTracker {
+	return &AppendConfirmedBookingToTracker{
+		appendConfirmedBookingToTrackerUseCase: appendConfirmedBookingToTrackerUseCase,
+	}
 }
 
 func (a *AppendConfirmedBookingToTracker) Handle(ctx context.Context, event *event.TicketBookingConfirmed) error {
-	err := a.spreadsheetAPI.AppendRow(
+	err := a.appendConfirmedBookingToTrackerUseCase.Execute(
 		ctx,
-		"tickets-to-print",
-		[]string{
-			event.TicketID,
-			event.CustomerEmail,
-			event.Price.Amount,
-			event.Price.Currency,
+		usecase.AppendConfirmedBookingToTrackerInput{
+			TicketID:      event.TicketID,
+			CustomerEmail: event.CustomerEmail,
+			Price:         event.Price,
 		},
 	)
 	if err != nil {

@@ -2,27 +2,29 @@ package http
 
 import (
 	"net/http"
-	"tickets/internal/provider/eventbus"
-	"tickets/internal/provider/repo"
+	"tickets/internal/domain/usecase"
 
 	libHttp "github.com/ThreeDotsLabs/go-event-driven/v2/common/http"
 	"github.com/labstack/echo/v4"
 )
 
 func NewHttpRouter(
-	eventBus eventbus.EventBus,
-	ticketRepo repo.TicketRepo,
+	postTicketStatusUseCase *usecase.PostTicketStatus,
+	listTicketsUseCase *usecase.ListTickets,
 ) *echo.Echo {
 	e := libHttp.NewEcho()
 
-	handler := NewHandler(eventBus, ticketRepo)
+	ticketHandler := NewTicketHandler(
+		postTicketStatusUseCase,
+		listTicketsUseCase,
+	)
 
 	e.GET("/health", func(c echo.Context) error {
 		return c.String(http.StatusOK, "ok")
 	})
 
-	e.POST("/tickets-status", handler.PostTicketsStatus)
-	e.GET("/tickets", handler.ListTickets)
+	e.POST("/tickets-status", ticketHandler.PostTicketsStatus)
+	e.GET("/tickets", ticketHandler.ListTickets)
 
 	return e
 }
