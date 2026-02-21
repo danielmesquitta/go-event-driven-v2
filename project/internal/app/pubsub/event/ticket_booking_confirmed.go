@@ -9,6 +9,15 @@ type TicketBookingConfirmed struct {
 	Price         entity.Money `json:"price"`
 }
 
+func NewTicketBookingConfirmed(ticketID string, customerEmail string, price entity.Money) *TicketBookingConfirmed {
+	return &TicketBookingConfirmed{
+		Header:        NewEventHeader(),
+		TicketID:      ticketID,
+		CustomerEmail: customerEmail,
+		Price:         price,
+	}
+}
+
 func (e *TicketBookingConfirmed) GetHeader() EventHeader {
 	return e.Header
 }

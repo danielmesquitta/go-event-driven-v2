@@ -75,7 +75,7 @@ func New() Service {
 	deleteTicketUseCase := usecase.NewDeleteTicket(ticketRepo)
 	deleteTicketHandler := handler.NewDeleteTicket(deleteTicketUseCase)
 
-	printTicketUseCase := usecase.NewPrintTicket(fileStorageClient)
+	printTicketUseCase := usecase.NewPrintTicket(fileStorageClient, eventBus)
 	printTicketHandler := handler.NewPrintTicket(printTicketUseCase)
 
 	router := router.NewRouter(

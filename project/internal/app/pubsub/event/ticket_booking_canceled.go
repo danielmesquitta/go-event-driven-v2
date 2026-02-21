@@ -9,6 +9,15 @@ type TicketBookingCanceled struct {
 	Price         entity.Money `json:"price"`
 }
 
+func NewTicketBookingCanceled(ticketID string, customerEmail string, price entity.Money) *TicketBookingCanceled {
+	return &TicketBookingCanceled{
+		Header:        NewEventHeader(),
+		TicketID:      ticketID,
+		CustomerEmail: customerEmail,
+		Price:         price,
+	}
+}
+
 func (e *TicketBookingCanceled) GetHeader() EventHeader {
 	return e.Header
 }

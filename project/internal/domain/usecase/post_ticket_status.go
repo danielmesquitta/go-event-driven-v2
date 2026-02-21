@@ -43,20 +43,10 @@ func (p *PostTicketStatus) postTicketStatus(ctx context.Context, ticket entity.T
 	var e event.Event
 	switch ticket.Status {
 	case entity.TicketStatusConfirmed:
-		e = &event.TicketBookingConfirmed{
-			Header:        event.NewEventHeader(),
-			TicketID:      ticket.ID,
-			CustomerEmail: ticket.CustomerEmail,
-			Price:         ticket.Price,
-		}
+		e = event.NewTicketBookingConfirmed(ticket.ID, ticket.CustomerEmail, ticket.Price)
 
 	case entity.TicketStatusCanceled:
-		e = &event.TicketBookingCanceled{
-			Header:        event.NewEventHeader(),
-			TicketID:      ticket.ID,
-			CustomerEmail: ticket.CustomerEmail,
-			Price:         ticket.Price,
-		}
+		e = event.NewTicketBookingCanceled(ticket.ID, ticket.CustomerEmail, ticket.Price)
 
 	default:
 		return errs.ErrInvalidFormat.New(errs.WithMetadata("status", ticket.Status))
