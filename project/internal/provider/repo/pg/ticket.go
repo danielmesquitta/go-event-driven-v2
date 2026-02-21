@@ -30,6 +30,7 @@ func (r *TicketRepo) Create(ctx context.Context, ticket *entity.Ticket) error {
 	_, err := r.db.DB.ExecContext(ctx, `
 		INSERT INTO tickets (ticket_id, price_amount, price_currency, customer_email)
 		VALUES ($1, $2, $3, $4)
+		ON CONFLICT DO NOTHING
 	`, ticket.ID, ticket.Price.Amount, ticket.Price.Currency, ticket.CustomerEmail)
 	if err != nil {
 		return fmt.Errorf("failed to create ticket: %w", err)
