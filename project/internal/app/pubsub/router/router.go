@@ -19,6 +19,7 @@ type Router struct {
 	issueReceiptHandler                    *handler.IssueReceipt
 	createTicketHandler                    *handler.CreateTicket
 	deleteTicketHandler                    *handler.DeleteTicket
+	printTicketHandler                     *handler.PrintTicket
 }
 
 func NewRouter(
@@ -28,6 +29,7 @@ func NewRouter(
 	issueReceiptHandler *handler.IssueReceipt,
 	createTicketHandler *handler.CreateTicket,
 	deleteTicketHandler *handler.DeleteTicket,
+	printTicketHandler *handler.PrintTicket,
 ) *Router {
 	return &Router{
 		eventBus:                               eventBus,
@@ -36,6 +38,7 @@ func NewRouter(
 		issueReceiptHandler:                    issueReceiptHandler,
 		createTicketHandler:                    createTicketHandler,
 		deleteTicketHandler:                    deleteTicketHandler,
+		printTicketHandler:                     printTicketHandler,
 	}
 }
 
@@ -66,6 +69,7 @@ func (r *Router) Run(
 	eventbus.AddHandler(r.eventBus, r.appendCanceledBookingToTrackerHandler.Handle)
 	eventbus.AddHandler(r.eventBus, r.appendConfirmedBookingToTrackerHandler.Handle)
 	eventbus.AddHandler(r.eventBus, r.createTicketHandler.Handle)
+	eventbus.AddHandler(r.eventBus, r.printTicketHandler.Handle)
 
 	return r.eventBus.Run(ctx)
 }

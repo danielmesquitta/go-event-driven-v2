@@ -19,6 +19,8 @@ import (
 	"tickets/internal/domain/usecase"
 	"tickets/internal/provider/db"
 	"tickets/internal/provider/eventbus/redisstream"
+	"tickets/internal/provider/filestorage"
+	"tickets/internal/provider/filestorage/filestorageapi"
 	"tickets/internal/provider/receipt"
 	"tickets/internal/provider/receipt/receiptsvc"
 	"tickets/internal/provider/repo/pg"
@@ -32,6 +34,7 @@ type Service struct {
 	router          *router.Router
 	spreadsheetsAPI spreadsheet.API
 	receiptsService receipt.Service
+	fileStorage     filestorage.Storage
 }
 
 func New() Service {
@@ -53,6 +56,7 @@ func New() Service {
 
 	spreadsheetsAPI := spreadsheetapi.NewClient(apiClients)
 	receiptsService := receiptsvc.NewClient(apiClients)
+	fileStorageClient := filestorageapi.NewClient(apiClients)
 
 	eventBus := redisstream.NewEventBus()
 
@@ -71,6 +75,9 @@ func New() Service {
 	deleteTicketUseCase := usecase.NewDeleteTicket(ticketRepo)
 	deleteTicketHandler := handler.NewDeleteTicket(deleteTicketUseCase)
 
+	printTicketUseCase := usecase.NewPrintTicket(fileStorageClient)
+	printTicketHandler := handler.NewPrintTicket(printTicketUseCase)
+
 	router := router.NewRouter(
 		eventBus,
 		appendCanceledBookingToTrackerHandler,
@@ -78,6 +85,7 @@ func New() Service {
 		issueReceiptHandler,
 		createTicketHandler,
 		deleteTicketHandler,
+		printTicketHandler,
 	)
 
 	postTicketStatusUseCase := usecase.NewPostTicketStatus(eventBus)
@@ -94,6 +102,7 @@ func New() Service {
 		router:          router,
 		spreadsheetsAPI: spreadsheetsAPI,
 		receiptsService: receiptsService,
+		fileStorage:     fileStorageClient,
 	}
 
 	return svc
