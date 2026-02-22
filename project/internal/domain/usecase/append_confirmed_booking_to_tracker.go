@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"tickets/internal/domain/entity"
+	"tickets/internal/pkg/validator"
 	"tickets/internal/provider/spreadsheet"
 )
 
@@ -15,13 +16,18 @@ func NewAppendConfirmedBookingToTracker(spreadsheetAPI spreadsheet.API) *AppendC
 }
 
 type AppendConfirmedBookingToTrackerInput struct {
-	TicketID      string
-	CustomerEmail string
-	Price         entity.Money
+	TicketID      string       `json:"ticket_id" validate:"required"`
+	CustomerEmail string       `json:"customer_email" validate:"required"`
+	Price         entity.Money `json:"price" validate:"required"`
 }
 
 func (a *AppendConfirmedBookingToTracker) Execute(ctx context.Context, in AppendConfirmedBookingToTrackerInput) error {
-	err := a.spreadsheetAPI.AppendRow(
+	err := validator.Validate(ctx, in)
+	if err != nil {
+		return err
+	}
+
+	err = a.spreadsheetAPI.AppendRow(
 		ctx,
 		"tickets-to-print",
 		[]string{

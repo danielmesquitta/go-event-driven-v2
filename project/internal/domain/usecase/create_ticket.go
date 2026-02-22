@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"tickets/internal/domain/entity"
+	"tickets/internal/pkg/validator"
 	"tickets/internal/provider/repo"
 )
 
@@ -15,13 +16,18 @@ func NewCreateTicket(ticketRepo repo.TicketRepo) *CreateTicket {
 }
 
 type CreateTicketInput struct {
-	TicketID      string
-	Price         entity.Money
-	CustomerEmail string
+	TicketID      string       `json:"ticket_id" validate:"required"`
+	Price         entity.Money `json:"price" validate:"required"`
+	CustomerEmail string       `json:"customer_email" validate:"required"`
 }
 
 func (c *CreateTicket) Execute(ctx context.Context, in CreateTicketInput) error {
-	err := c.ticketRepo.Create(ctx, &entity.Ticket{
+	err := validator.Validate(ctx, in)
+	if err != nil {
+		return err
+	}
+
+	err = c.ticketRepo.Create(ctx, &entity.Ticket{
 		ID:            in.TicketID,
 		Price:         in.Price,
 		CustomerEmail: in.CustomerEmail,

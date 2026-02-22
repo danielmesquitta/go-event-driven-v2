@@ -1,23 +1,27 @@
-package http
+package router
 
 import (
 	"net/http"
+	"tickets/internal/app/http/handler"
+	"tickets/internal/app/http/middleware"
 	"tickets/internal/domain/usecase"
 
-	libHttp "github.com/ThreeDotsLabs/go-event-driven/v2/common/http"
+	libHTTP "github.com/ThreeDotsLabs/go-event-driven/v2/common/http"
 	"github.com/labstack/echo/v4"
 )
 
-func NewHttpRouter(
+func New(
 	postTicketStatusUseCase *usecase.PostTicketStatus,
 	listTicketsUseCase *usecase.ListTickets,
 ) *echo.Echo {
-	e := libHttp.NewEcho()
+	e := libHTTP.NewEcho()
 
-	ticketHandler := NewTicketHandler(
+	ticketHandler := handler.NewTicketHandler(
 		postTicketStatusUseCase,
 		listTicketsUseCase,
 	)
+
+	e.Use(middleware.Context)
 
 	e.GET("/health", func(c echo.Context) error {
 		return c.String(http.StatusOK, "ok")

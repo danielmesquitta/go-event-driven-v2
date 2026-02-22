@@ -3,14 +3,14 @@ package middleware
 import (
 	"errors"
 	"tickets/internal/domain/errs"
+	"tickets/internal/pkg/log"
 
-	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 	"github.com/ThreeDotsLabs/watermill/message"
 )
 
 func ErrorHandler(next message.HandlerFunc) message.HandlerFunc {
 	return func(msg *message.Message) ([]*message.Message, error) {
-		logger := log.FromContext(msg.Context())
+		logger := log.New(msg.Context())
 
 		res, err := next(msg)
 		if err == nil {

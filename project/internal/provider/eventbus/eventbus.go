@@ -9,31 +9,8 @@ import (
 	"github.com/google/uuid"
 )
 
-type PublishOption func(*publishOptions)
-
-type publishOptions struct {
-	correlationID string
-}
-
-func WithCorrelationID(id string) PublishOption {
-	return func(o *publishOptions) {
-		o.correlationID = id
-	}
-}
-
-func ApplyPublishOptions(ctx context.Context, opts []PublishOption) context.Context {
-	o := &publishOptions{}
-	for _, opt := range opts {
-		opt(o)
-	}
-	if o.correlationID != "" {
-		ctx = ContextWithCorrelationID(ctx, o.correlationID)
-	}
-	return ctx
-}
-
 type EventBus interface {
-	Publish(ctx context.Context, event event.Event, opts ...PublishOption) error
+	Publish(ctx context.Context, event event.Event) error
 	AddHandler(handler EventHandler) error
 	AddMiddleware(m ...message.HandlerMiddleware)
 

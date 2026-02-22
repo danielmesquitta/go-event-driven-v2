@@ -2,9 +2,12 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"tickets/internal/app/pubsub/event"
 	"tickets/internal/domain/entity"
 	"tickets/internal/domain/errs"
+	"tickets/internal/pkg/ctxval"
+	"tickets/internal/pkg/validator"
 	"tickets/internal/provider/eventbus"
 
 	"golang.org/x/sync/errgroup"
@@ -23,36 +26,62 @@ func NewPostTicketStatus(
 }
 
 type PostTicketStatusInput struct {
-	CorrelationID string          `json:"correlation_id"`
-	Tickets       []entity.Ticket `json:"tickets"`
+	Tickets []entity.Ticket `json:"tickets"         validate:"required,dive"`
 }
 
 func (p *PostTicketStatus) Execute(ctx context.Context, in PostTicketStatusInput) error {
+	err := validator.Validate(ctx, in)
+	if err != nil {
+		return err
+	}
+
 	g, gCtx := errgroup.WithContext(ctx)
 
 	for _, ticket := range in.Tickets {
 		g.Go(func() error {
-			return p.postTicketStatus(gCtx, ticket, in.CorrelationID)
+			return p.postTicketStatus(gCtx, postTicketStatusInput{
+				Ticket: ticket,
+			})
 		})
 	}
 
 	return g.Wait()
 }
 
-func (p *PostTicketStatus) postTicketStatus(ctx context.Context, ticket entity.Ticket, correlationID string) error {
+type postTicketStatusInput struct {
+	Ticket entity.Ticket
+}
+
+func (p *PostTicketStatus) postTicketStatus(ctx context.Context, in postTicketStatusInput) error {
+	idempotencyKey := ctxval.GetIdempotencyKey(ctx) + "-" + in.Ticket.ID
+	ctx = ctxval.WithIdempotencyKey(ctx, idempotencyKey)
+
 	var e event.Event
-	switch ticket.Status {
+	switch in.Ticket.Status {
 	case entity.TicketStatusConfirmed:
-		e = event.NewTicketBookingConfirmed(ticket.ID, ticket.CustomerEmail, ticket.Price)
+		e = event.NewTicketBookingConfirmed(
+			ctx,
+			in.Ticket.ID,
+			in.Ticket.CustomerEmail,
+			in.Ticket.Price,
+		)
 
 	case entity.TicketStatusCanceled:
-		e = event.NewTicketBookingCanceled(ticket.ID, ticket.CustomerEmail, ticket.Price)
+		e = event.NewTicketBookingCanceled(
+			ctx,
+			in.Ticket.ID,
+			in.Ticket.CustomerEmail,
+			in.Ticket.Price,
+		)
 
 	default:
-		return errs.ErrInvalidFormat.New(errs.WithMetadata("status", ticket.Status))
+		msgs := map[string]string{
+			"status": fmt.Sprintf("status must be confirmed or canceled, got: %s", in.Ticket.Status),
+		}
+		return errs.ErrInvalidFormat.New(errs.WithMetadata(errs.MetadataErrorsKey, msgs))
 	}
 
-	if err := p.eventBus.Publish(ctx, e, eventbus.WithCorrelationID(correlationID)); err != nil {
+	if err := p.eventBus.Publish(ctx, e); err != nil {
 		return err
 	}
 

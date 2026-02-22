@@ -1,6 +1,9 @@
 package event
 
-import "tickets/internal/domain/entity"
+import (
+	"context"
+	"tickets/internal/domain/entity"
+)
 
 type TicketBookingCanceled struct {
 	Header        EventHeader  `json:"header"`
@@ -9,9 +12,14 @@ type TicketBookingCanceled struct {
 	Price         entity.Money `json:"price"`
 }
 
-func NewTicketBookingCanceled(ticketID string, customerEmail string, price entity.Money) *TicketBookingCanceled {
+func NewTicketBookingCanceled(
+	ctx context.Context,
+	ticketID string,
+	customerEmail string,
+	price entity.Money,
+) *TicketBookingCanceled {
 	return &TicketBookingCanceled{
-		Header:        NewEventHeader(),
+		Header:        NewEventHeader(ctx),
 		TicketID:      ticketID,
 		CustomerEmail: customerEmail,
 		Price:         price,
@@ -20,16 +28,6 @@ func NewTicketBookingCanceled(ticketID string, customerEmail string, price entit
 
 func (e *TicketBookingCanceled) GetHeader() EventHeader {
 	return e.Header
-}
-
-func (e *TicketBookingCanceled) SetDefaults() {
-	if e.Header.ID == "" || e.Header.PublishedAt.IsZero() {
-		e.Header = NewEventHeader()
-	}
-
-	if e.Price.Currency == "" {
-		e.Price.Currency = "USD"
-	}
 }
 
 var _ Event = (*TicketBookingCanceled)(nil)

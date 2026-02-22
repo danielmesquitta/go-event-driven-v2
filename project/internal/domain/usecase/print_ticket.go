@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"tickets/internal/app/pubsub/event"
 	"tickets/internal/domain/entity"
+	"tickets/internal/pkg/ctxval"
+	"tickets/internal/pkg/validator"
 	"tickets/internal/provider/eventbus"
 	"tickets/internal/provider/filestorage"
 )
@@ -25,12 +27,16 @@ func NewPrintTicket(
 }
 
 type PrintTicketInput struct {
-	CorrelationID string
-	TicketID      string
-	Price         entity.Money
+	TicketID string       `json:"ticket_id" validate:"required"`
+	Price    entity.Money `json:"price" validate:"required"`
 }
 
 func (p *PrintTicket) Execute(ctx context.Context, in PrintTicketInput) error {
+	err := validator.Validate(ctx, in)
+	if err != nil {
+		return err
+	}
+
 	fileID := fmt.Sprintf("%s-ticket.html", in.TicketID)
 
 	content := fmt.Sprintf(
@@ -38,13 +44,20 @@ func (p *PrintTicket) Execute(ctx context.Context, in PrintTicketInput) error {
 		in.TicketID, in.TicketID, in.Price.Amount, in.Price.Currency,
 	)
 
-	err := p.fileStorage.StoreFile(ctx, fileID, content)
+	err = p.fileStorage.StoreFile(ctx, fileID, content)
 	if err != nil {
 		return err
 	}
 
-	e := event.NewTicketPrinted(in.TicketID, fileID)
-	if err := p.eventBus.Publish(ctx, e, eventbus.WithCorrelationID(in.CorrelationID)); err != nil {
+	idempotencyKey := ctxval.GetIdempotencyKey(ctx) + "-" + in.TicketID
+	ctx = ctxval.WithIdempotencyKey(ctx, idempotencyKey)
+
+	e := event.NewTicketPrinted(
+		ctx,
+		in.TicketID,
+		fileID,
+	)
+	if err := p.eventBus.Publish(ctx, e); err != nil {
 		return err
 	}
 

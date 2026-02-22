@@ -50,7 +50,7 @@ func (r *Router) Run(
 		InitialInterval: time.Millisecond * 100,
 		MaxInterval:     time.Second,
 		Multiplier:      2,
-		Logger:          watermill.NewSlogLogger(log.FromContext(ctx)),
+		Logger:          watermill.NewSlogLogger(log.New(ctx)),
 	}
 
 	r.eventBus.AddMiddleware(
@@ -61,11 +61,11 @@ func (r *Router) Run(
 		pubSubMiddleware.ErrorHandler,
 	)
 
-	// Ticket booking canceled
+	// TicketBookingCanceled
 	eventbus.AddHandler(r.eventBus, r.issueReceiptHandler.Handle)
 	eventbus.AddHandler(r.eventBus, r.deleteTicketHandler.Handle)
 
-	// Ticket booking confirmed
+	// TicketBookingConfirmed
 	eventbus.AddHandler(r.eventBus, r.appendCanceledBookingToTrackerHandler.Handle)
 	eventbus.AddHandler(r.eventBus, r.appendConfirmedBookingToTrackerHandler.Handle)
 	eventbus.AddHandler(r.eventBus, r.createTicketHandler.Handle)

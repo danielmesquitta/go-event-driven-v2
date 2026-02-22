@@ -12,7 +12,7 @@ type ErrorBuilder interface {
 type Error struct {
 	code     Code
 	message  string
-	metadata map[string]any
+	metadata map[MetadataKey]any
 }
 
 type Code string
@@ -25,12 +25,18 @@ const (
 	CodeBadRequest   Code = "bad_request"
 )
 
+type MetadataKey string
+
+const (
+	MetadataErrorsKey MetadataKey = "errors"
+)
+
 type Option func(*Error)
 
-func WithMetadata(key string, value any) Option {
+func WithMetadata(key MetadataKey, value any) Option {
 	return func(e *Error) {
 		if e.metadata == nil {
-			e.metadata = make(map[string]any)
+			e.metadata = make(map[MetadataKey]any)
 		}
 		e.metadata[key] = value
 	}
@@ -62,11 +68,4 @@ func (e *Error) Error() string {
 
 func (e *Error) Code() Code {
 	return e.code
-}
-
-func (e *Error) Set(key string, value any) {
-	if e.metadata == nil {
-		e.metadata = make(map[string]any)
-	}
-	e.metadata[key] = value
 }

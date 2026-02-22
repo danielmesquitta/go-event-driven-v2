@@ -1,11 +1,9 @@
 package middleware
 
 import (
-	"log/slog"
 	"tickets/internal/app/pubsub/event"
-	"tickets/internal/provider/eventbus"
+	"tickets/internal/pkg/ctxval"
 
-	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
 )
@@ -17,8 +15,7 @@ func CorrelationID(next message.HandlerFunc) message.HandlerFunc {
 			correlationID = uuid.NewString()
 		}
 
-		ctx := eventbus.ContextWithCorrelationID(msg.Context(), correlationID)
-		ctx = log.ToContext(ctx, slog.With(string(event.MetadataKeyCorrelationID), correlationID))
+		ctx := ctxval.WithCorrelationID(msg.Context(), correlationID)
 
 		msg.SetContext(ctx)
 

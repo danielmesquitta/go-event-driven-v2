@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"tickets/internal/domain/entity"
+	"tickets/internal/pkg/validator"
 	"tickets/internal/provider/receipt"
 )
 
@@ -15,12 +16,17 @@ func NewIssueReceipt(receiptsService receipt.Service) *IssueReceipt {
 }
 
 type IssueReceiptInput struct {
-	TicketID string
-	Price    entity.Money
+	TicketID string       `json:"ticket_id" validate:"required"`
+	Price    entity.Money `json:"price" validate:"required"`
 }
 
 func (i *IssueReceipt) Execute(ctx context.Context, in IssueReceiptInput) error {
-	err := i.receiptsService.IssueReceipt(
+	err := validator.Validate(ctx, in)
+	if err != nil {
+		return err
+	}
+
+	err = i.receiptsService.IssueReceipt(
 		ctx,
 		in.TicketID,
 		in.Price,

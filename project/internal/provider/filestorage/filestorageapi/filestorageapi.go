@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"tickets/internal/pkg/log"
 	"tickets/internal/provider/filestorage"
 
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients"
-	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 )
 
 type Client struct {
@@ -33,7 +33,7 @@ func (c Client) StoreFile(ctx context.Context, fileID string, content string) er
 	case http.StatusCreated:
 		return nil
 	case http.StatusConflict:
-		log.FromContext(ctx).With("file", fileID).Info("file already exists")
+		log.New(ctx).With("file", fileID).Info("file already exists")
 		return nil
 	default:
 		return fmt.Errorf("unexpected status code for PUT files/%s/content: %d", fileID, resp.StatusCode())

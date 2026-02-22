@@ -1,4 +1,4 @@
-package http
+package handler
 
 import (
 	"net/http"
@@ -59,8 +59,7 @@ func (h TicketHandler) PostTicketsStatus(c echo.Context) error {
 	}
 
 	err = h.postTicketStatusUseCase.Execute(c.Request().Context(), usecase.PostTicketStatusInput{
-		CorrelationID: getCorrelationID(c),
-		Tickets:       tickets,
+		Tickets: tickets,
 	})
 	if err != nil {
 		return err

@@ -1,24 +1,23 @@
 package middleware
 
 import (
-	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
+	"tickets/internal/pkg/ctxval"
+
+	"tickets/internal/pkg/log"
+
 	"github.com/ThreeDotsLabs/watermill/message"
 )
 
 func Logger(next message.HandlerFunc) message.HandlerFunc {
 	return func(msg *message.Message) ([]*message.Message, error) {
-		logger := log.FromContext(msg.Context())
-		logger = logger.With(
-			"message_id", msg.UUID,
-			"payload", string(msg.Payload),
-			"metadata", msg.Metadata,
-			"handler", message.HandlerNameFromCtx(msg.Context()),
-		)
-
-		ctx := log.ToContext(msg.Context(), logger)
+		ctx := ctxval.WithMessageID(msg.Context(), msg.UUID)
+		ctx = ctxval.WithPayload(ctx, msg.Payload)
+		ctx = ctxval.WithMetadata(ctx, msg.Metadata)
+		ctx = ctxval.WithHandlerName(ctx, message.HandlerNameFromCtx(ctx))
 		msg.SetContext(ctx)
 
-		logger.Info("Handling a message")
+		logger := log.New(ctx)
+		logger.Info("Handling message")
 
 		res, err := next(msg)
 		if err != nil {

@@ -3,26 +3,41 @@ package log
 import (
 	"context"
 	"log/slog"
-	"os"
+	"tickets/internal/pkg/ctxval"
 )
 
-type ctxKey int
+func New(ctx context.Context) *slog.Logger {
+	logger := slog.Default()
 
-const (
-	loggerKey ctxKey = iota
-)
-
-// FromContext returns the logger from the context.
-func FromContext(ctx context.Context) *slog.Logger {
-	log, ok := ctx.Value(loggerKey).(*slog.Logger)
-	if ok {
-		return log
+	correlationID := ctxval.GetCorrelationID(ctx)
+	if correlationID != "" {
+		logger = logger.With(string(ctxval.CorrelationIDKey), correlationID)
 	}
 
-	return slog.New(slog.NewTextHandler(os.Stderr, nil))
-}
+	idempotencyKey := ctxval.GetIdempotencyKey(ctx)
+	if idempotencyKey != "" {
+		logger = logger.With(string(ctxval.IdempotencyKey), idempotencyKey)
+	}
 
-// ToContext adds the logger to the context.
-func ToContext(ctx context.Context, logger *slog.Logger) context.Context {
-	return context.WithValue(ctx, loggerKey, logger)
+	messageID := ctxval.GetMessageID(ctx)
+	if messageID != "" {
+		logger = logger.With(string(ctxval.MessageIDKey), messageID)
+	}
+
+	payload := ctxval.GetPayload(ctx)
+	if len(payload) > 0 {
+		logger = logger.With(string(ctxval.PayloadKey), string(payload))
+	}
+
+	metadata := ctxval.GetMetadata(ctx)
+	if len(metadata) > 0 {
+		logger = logger.With(string(ctxval.MetadataKey), metadata)
+	}
+
+	handlerName := ctxval.GetHandlerName(ctx)
+	if handlerName != "" {
+		logger = logger.With(string(ctxval.HandlerNameKey), handlerName)
+	}
+
+	return logger
 }

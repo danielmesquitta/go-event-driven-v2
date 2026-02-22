@@ -3,20 +3,19 @@ package app
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients"
-	"github.com/ThreeDotsLabs/go-event-driven/v2/common/log"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/sync/errgroup"
 
-	appHTTP "tickets/internal/app/http"
+	httpRouter "tickets/internal/app/http/router"
 	"tickets/internal/app/pubsub/handler"
-	"tickets/internal/app/pubsub/router"
+	pubSubRouter "tickets/internal/app/pubsub/router"
 	"tickets/internal/domain/usecase"
+	"tickets/internal/pkg/ctxval"
 	"tickets/internal/provider/db"
 	"tickets/internal/provider/eventbus/redisstream"
 	"tickets/internal/provider/filestorage"
@@ -30,20 +29,18 @@ import (
 
 type Service struct {
 	db              *db.DB
-	echoRouter      *echo.Echo
-	router          *router.Router
+	httpRouter      *echo.Echo
+	pubSubRouter    *pubSubRouter.Router
 	spreadsheetsAPI spreadsheet.API
 	receiptsService receipt.Service
 	fileStorage     filestorage.Storage
 }
 
 func New() Service {
-	log.Init(slog.LevelInfo)
-
 	apiClients, err := clients.NewClients(
 		os.Getenv("GATEWAY_ADDR"),
 		func(ctx context.Context, req *http.Request) error {
-			req.Header.Set("Correlation-ID", log.CorrelationIDFromContext(ctx))
+			req.Header.Set("Correlation-ID", ctxval.GetCorrelationID(ctx))
 			return nil
 		},
 	)
@@ -78,7 +75,7 @@ func New() Service {
 	printTicketUseCase := usecase.NewPrintTicket(fileStorageClient, eventBus)
 	printTicketHandler := handler.NewPrintTicket(printTicketUseCase)
 
-	router := router.NewRouter(
+	pubSubRouter := pubSubRouter.NewRouter(
 		eventBus,
 		appendCanceledBookingToTrackerHandler,
 		appendConfirmedBookingToTrackerHandler,
@@ -91,15 +88,15 @@ func New() Service {
 	postTicketStatusUseCase := usecase.NewPostTicketStatus(eventBus)
 	listTicketsUseCase := usecase.NewListTickets(ticketRepo)
 
-	echoRouter := appHTTP.NewHttpRouter(
+	httpRouter := httpRouter.New(
 		postTicketStatusUseCase,
 		listTicketsUseCase,
 	)
 
 	svc := Service{
 		db:              db,
-		echoRouter:      echoRouter,
-		router:          router,
+		httpRouter:      httpRouter,
+		pubSubRouter:    pubSubRouter,
 		spreadsheetsAPI: spreadsheetsAPI,
 		receiptsService: receiptsService,
 		fileStorage:     fileStorageClient,
@@ -119,13 +116,13 @@ func (s Service) Run(ctx context.Context) error {
 	})
 
 	g.Go(func() error {
-		return s.router.Run(ctx)
+		return s.pubSubRouter.Run(ctx)
 	})
 
 	g.Go(func() error {
-		<-s.router.Running()
+		<-s.pubSubRouter.Running()
 
-		err := s.echoRouter.Start(":8080")
+		err := s.httpRouter.Start(":8080")
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			return err
 		}
@@ -135,7 +132,7 @@ func (s Service) Run(ctx context.Context) error {
 
 	g.Go(func() error {
 		<-ctx.Done()
-		return s.echoRouter.Shutdown(ctx)
+		return s.httpRouter.Shutdown(ctx)
 	})
 
 	return g.Wait()

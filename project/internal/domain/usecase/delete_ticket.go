@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"tickets/internal/pkg/validator"
 	"tickets/internal/provider/repo"
 )
 
@@ -14,10 +15,15 @@ func NewDeleteTicket(ticketRepo repo.TicketRepo) *DeleteTicket {
 }
 
 type DeleteTicketInput struct {
-	TicketID string
+	TicketID string `json:"ticket_id" validate:"required"`
 }
 
 func (c *DeleteTicket) Execute(ctx context.Context, in DeleteTicketInput) error {
+	err := validator.Validate(ctx, in)
+	if err != nil {
+		return err
+	}
+
 	ticket, err := c.ticketRepo.Get(ctx, in.TicketID)
 	if err != nil {
 		return err
