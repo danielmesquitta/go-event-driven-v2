@@ -9,3 +9,7 @@ up:
 .PHONY: update
 update:
 	@go mod tidy && go get -u ./...
+
+.PHONY: generate
+generate:
+	go generate ./...
