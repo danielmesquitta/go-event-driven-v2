@@ -1,7 +1,6 @@
 package router
 
 import (
-	"net/http"
 	"tickets/internal/app/http/handler"
 	"tickets/internal/app/http/middleware"
 	"tickets/internal/domain/usecase"
@@ -21,11 +20,14 @@ func New(
 		listTicketsUseCase,
 	)
 
-	e.Use(middleware.Context)
+	healthHandler := handler.NewHealthHandler()
 
-	e.GET("/health", func(c echo.Context) error {
-		return c.String(http.StatusOK, "ok")
-	})
+	e.Use(
+		middleware.CorrelationID,
+		middleware.IdempotencyKey,
+	)
+
+	e.GET("/health", healthHandler.Handle)
 
 	e.POST("/tickets-status", ticketHandler.PostTicketsStatus)
 	e.GET("/tickets", ticketHandler.ListTickets)

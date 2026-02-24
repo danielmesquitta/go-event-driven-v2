@@ -54,11 +54,12 @@ func (r *Router) Run(
 	}
 
 	r.eventBus.AddMiddleware(
-		middleware.CorrelationID,
-		pubSubMiddleware.CorrelationID,
 		retry.Middleware,
 		pubSubMiddleware.Logger,
 		pubSubMiddleware.ErrorHandler,
+		middleware.CorrelationID,
+		pubSubMiddleware.CorrelationID,
+		pubSubMiddleware.IdempotencyKey,
 	)
 
 	// TicketBookingCanceled

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"tickets/internal/domain/entity"
+	"tickets/internal/pkg/ctxval"
 	"tickets/internal/provider/receipt"
 
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients"
@@ -25,8 +26,10 @@ func NewClient(clients *clients.Clients) *Client {
 }
 
 func (c Client) IssueReceipt(ctx context.Context, ticketID string, price entity.Money) error {
+	idempotencyKey := ctxval.GetIdempotencyKey(ctx)
 	resp, err := c.clients.Receipts.PutReceiptsWithResponse(ctx, receipts.CreateReceipt{
-		TicketId: ticketID,
+		IdempotencyKey: &idempotencyKey,
+		TicketId:       ticketID,
 		Price: receipts.Money{
 			MoneyAmount:   price.Amount,
 			MoneyCurrency: price.Currency,
