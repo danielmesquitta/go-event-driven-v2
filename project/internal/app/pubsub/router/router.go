@@ -3,7 +3,8 @@ package router
 import (
 	"context"
 	"tickets/internal/app/pubsub/event"
-	"tickets/internal/app/pubsub/handler"
+	"tickets/internal/app/pubsub/handler/bookingcanceled"
+	"tickets/internal/app/pubsub/handler/bookingconfirmed"
 	pubSubMiddleware "tickets/internal/app/pubsub/middleware"
 	"tickets/internal/pkg/log"
 	"tickets/internal/provider/eventbus"
@@ -14,23 +15,23 @@ import (
 )
 
 type Router struct {
-	eventBus                               eventbus.EventBus
-	appendCanceledBookingToTrackerHandler  *handler.AppendCanceledBookingToTracker
-	appendConfirmedBookingToTrackerHandler *handler.AppendConfirmedBookingToTracker
-	issueReceiptHandler                    *handler.IssueReceipt
-	createTicketHandler                    *handler.CreateTicket
-	deleteTicketHandler                    *handler.DeleteTicket
-	printTicketHandler                     *handler.PrintTicket
+	eventBus                              eventbus.EventBus
+	appendCanceledBookingToTrackerHandler *bookingcanceled.AppendToTracker
+	appendConfirmedBookingToTrackerHandler *bookingconfirmed.AppendToTracker
+	issueReceiptHandler                   *bookingconfirmed.IssueReceipt
+	createTicketHandler                   *bookingconfirmed.CreateTicket
+	deleteTicketHandler                   *bookingcanceled.DeleteTicket
+	printTicketHandler                    *bookingconfirmed.PrintTicket
 }
 
 func NewRouter(
 	eventBus eventbus.EventBus,
-	appendCanceledBookingToTrackerHandler *handler.AppendCanceledBookingToTracker,
-	appendConfirmedBookingToTrackerHandler *handler.AppendConfirmedBookingToTracker,
-	issueReceiptHandler *handler.IssueReceipt,
-	createTicketHandler *handler.CreateTicket,
-	deleteTicketHandler *handler.DeleteTicket,
-	printTicketHandler *handler.PrintTicket,
+	appendCanceledBookingToTrackerHandler *bookingcanceled.AppendToTracker,
+	appendConfirmedBookingToTrackerHandler *bookingconfirmed.AppendToTracker,
+	issueReceiptHandler *bookingconfirmed.IssueReceipt,
+	createTicketHandler *bookingconfirmed.CreateTicket,
+	deleteTicketHandler *bookingcanceled.DeleteTicket,
+	printTicketHandler *bookingconfirmed.PrintTicket,
 ) *Router {
 	return &Router{
 		eventBus:                               eventBus,

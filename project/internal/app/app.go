@@ -12,7 +12,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	httpRouter "tickets/internal/app/http/router"
-	"tickets/internal/app/pubsub/handler"
+	"tickets/internal/app/pubsub/handler/bookingcanceled"
+	"tickets/internal/app/pubsub/handler/bookingconfirmed"
 	pubSubRouter "tickets/internal/app/pubsub/router"
 	"tickets/internal/domain/usecase/ticket"
 	"tickets/internal/domain/usecase/tracker"
@@ -59,22 +60,22 @@ func New() Service {
 	eventBus := redisstream.NewEventBus()
 
 	appendCanceledBookingToTrackerUseCase := tracker.NewAppendCanceledBooking(spreadsheetsAPI)
-	appendCanceledBookingToTrackerHandler := handler.NewAppendCanceledBookingToTracker(appendCanceledBookingToTrackerUseCase)
+	appendCanceledBookingToTrackerHandler := bookingcanceled.NewAppendToTracker(appendCanceledBookingToTrackerUseCase)
 
 	appendConfirmedBookingToTrackerUseCase := tracker.NewAppendConfirmedBooking(spreadsheetsAPI)
-	appendConfirmedBookingToTrackerHandler := handler.NewAppendConfirmedBookingToTracker(appendConfirmedBookingToTrackerUseCase)
+	appendConfirmedBookingToTrackerHandler := bookingconfirmed.NewAppendToTracker(appendConfirmedBookingToTrackerUseCase)
 
 	issueReceiptUseCase := ticket.NewIssueReceipt(receiptsService)
-	issueReceiptHandler := handler.NewIssueReceipt(issueReceiptUseCase)
+	issueReceiptHandler := bookingconfirmed.NewIssueReceipt(issueReceiptUseCase)
 
 	createTicketUseCase := ticket.NewCreate(ticketRepo)
-	createTicketHandler := handler.NewCreateTicket(createTicketUseCase)
+	createTicketHandler := bookingconfirmed.NewCreateTicket(createTicketUseCase)
 
 	deleteTicketUseCase := ticket.NewDelete(ticketRepo)
-	deleteTicketHandler := handler.NewDeleteTicket(deleteTicketUseCase)
+	deleteTicketHandler := bookingcanceled.NewDeleteTicket(deleteTicketUseCase)
 
 	printTicketUseCase := ticket.NewPrint(fileStorageClient, eventBus)
-	printTicketHandler := handler.NewPrintTicket(printTicketUseCase)
+	printTicketHandler := bookingconfirmed.NewPrintTicket(printTicketUseCase)
 
 	pubSubRouter := pubSubRouter.NewRouter(
 		eventBus,
