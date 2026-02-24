@@ -3,30 +3,17 @@ package router
 import (
 	"tickets/internal/app/http/handler"
 	"tickets/internal/app/http/middleware"
-	"tickets/internal/domain/usecase/show"
-	"tickets/internal/domain/usecase/ticket"
 
 	libHTTP "github.com/ThreeDotsLabs/go-event-driven/v2/common/http"
 	"github.com/labstack/echo/v4"
 )
 
 func New(
-	postTicketStatusUseCase *ticket.PostStatus,
-	listTicketsUseCase *ticket.List,
-	createShowUseCase *show.Create,
+	showHandler *handler.ShowHandler,
+	ticketHandler *handler.TicketHandler,
+	healthHandler *handler.HealthHandler,
 ) *echo.Echo {
 	e := libHTTP.NewEcho()
-
-	showHandler := handler.NewShowHandler(
-		createShowUseCase,
-	)
-
-	ticketHandler := handler.NewTicketHandler(
-		postTicketStatusUseCase,
-		listTicketsUseCase,
-	)
-
-	healthHandler := handler.NewHealthHandler()
 
 	e.Use(
 		middleware.CorrelationID,

@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"golang.org/x/sync/errgroup"
 
+	"tickets/internal/app/http/handler"
 	httpRouter "tickets/internal/app/http/router"
 	"tickets/internal/app/pubsub/handler/bookingcanceled"
 	"tickets/internal/app/pubsub/handler/bookingconfirmed"
@@ -93,11 +94,16 @@ func New() Service {
 	listTicketsUseCase := ticket.NewList(ticketRepo)
 
 	createShowUseCase := show.NewCreate(showRepo)
+	showHandler := handler.NewShowHandler(createShowUseCase)
+
+	ticketHandler := handler.NewTicketHandler(postTicketStatusUseCase, listTicketsUseCase)
+
+	healthHandler := handler.NewHealthHandler()
 
 	httpRouter := httpRouter.New(
-		postTicketStatusUseCase,
-		listTicketsUseCase,
-		createShowUseCase,
+		showHandler,
+		ticketHandler,
+		healthHandler,
 	)
 
 	svc := Service{
