@@ -9,7 +9,7 @@ const (
 
 type Ticket struct {
 	ID            string       `json:"ticket_id"`
-	Status        TicketStatus `json:"status"`
+	Status        TicketStatus `json:"status" validate:"oneof=confirmed canceled"`
 	Price         Money        `json:"price"`
 	CustomerEmail string       `json:"customer_email"`
 }

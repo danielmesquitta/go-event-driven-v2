@@ -25,7 +25,7 @@ type createShowRequest struct {
 }
 
 type createShowResponse struct {
-	ID string `json:"id"`
+	ShowID string `json:"show_id"`
 }
 
 func (h *ShowHandler) CreateShow(c echo.Context) error {
@@ -46,5 +46,5 @@ func (h *ShowHandler) CreateShow(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, createShowResponse{ID: id})
+	return c.JSON(http.StatusCreated, createShowResponse{ShowID: id})
 }

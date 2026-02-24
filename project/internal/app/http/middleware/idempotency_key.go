@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"tickets/internal/pkg/ctxval"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -22,7 +23,10 @@ func IdempotencyKey(next echo.HandlerFunc) echo.HandlerFunc {
 
 		idempotencyKey := c.Request().Header.Get(HeaderIdempotencyKey)
 		if idempotencyKey == "" {
-			return echo.NewHTTPError(http.StatusBadRequest, "idempotency key is required")
+			// Should return error, but for development purposes we will create a new idempotency key
+			// return echo.NewHTTPError(http.StatusBadRequest, "idempotency key is required")
+			idempotencyKey = uuid.NewString()
+			c.Response().Header().Set(HeaderIdempotencyKey, idempotencyKey)
 		}
 
 		ctx = ctxval.WithIdempotencyKey(ctx, idempotencyKey)

@@ -27,16 +27,9 @@ type ticketsStatusRequest struct {
 	Tickets []ticketStatusRequest `json:"tickets"`
 }
 
-type ticketStatus string
-
-const (
-	statusConfirmed ticketStatus = "confirmed"
-	statusCanceled  ticketStatus = "canceled"
-)
-
 type ticketStatusRequest struct {
 	TicketID      string       `json:"ticket_id"`
-	Status        ticketStatus `json:"status"`
+	Status        string       `json:"status"`
 	Price         entity.Money `json:"price"`
 	CustomerEmail string       `json:"customer_email"`
 }
