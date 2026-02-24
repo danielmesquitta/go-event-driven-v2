@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/sync/errgroup"
 
@@ -19,11 +18,11 @@ import (
 	"tickets/internal/domain/usecase/show"
 	"tickets/internal/domain/usecase/ticket"
 	"tickets/internal/domain/usecase/tracker"
-	"tickets/internal/pkg/ctxval"
 	"tickets/internal/provider/db"
 	"tickets/internal/provider/eventbus/redisstream"
 	"tickets/internal/provider/filestorage"
 	"tickets/internal/provider/filestorage/filestorageapi"
+	"tickets/internal/provider/gateway"
 	"tickets/internal/provider/receipt"
 	"tickets/internal/provider/receipt/receiptsvc"
 	"tickets/internal/provider/repo/pg"
@@ -41,24 +40,15 @@ type Service struct {
 }
 
 func New() Service {
-	apiClients, err := clients.NewClients(
-		os.Getenv("GATEWAY_ADDR"),
-		func(ctx context.Context, req *http.Request) error {
-			req.Header.Set("Correlation-ID", ctxval.GetCorrelationID(ctx))
-			return nil
-		},
-	)
-	if err != nil {
-		panic(err)
-	}
+	gateway := gateway.NewGateway()
 
 	db := db.NewDB()
 	ticketRepo := pg.NewTicketRepo(db)
 	showRepo := pg.NewShowRepo(db)
 
-	spreadsheetsAPI := spreadsheetapi.NewClient(apiClients)
-	receiptsService := receiptsvc.NewClient(apiClients)
-	fileStorageClient := filestorageapi.NewClient(apiClients)
+	spreadsheetsAPI := spreadsheetapi.NewClient(gateway)
+	receiptsService := receiptsvc.NewClient(gateway)
+	fileStorageClient := filestorageapi.NewClient(gateway)
 
 	eventBus := redisstream.NewEventBus()
 
