@@ -15,6 +15,7 @@ import (
 	"tickets/internal/app/pubsub/handler/bookingcanceled"
 	"tickets/internal/app/pubsub/handler/bookingconfirmed"
 	pubSubRouter "tickets/internal/app/pubsub/router"
+	"tickets/internal/domain/usecase/show"
 	"tickets/internal/domain/usecase/ticket"
 	"tickets/internal/domain/usecase/tracker"
 	"tickets/internal/pkg/ctxval"
@@ -52,6 +53,7 @@ func New() Service {
 
 	db := db.NewDB()
 	ticketRepo := pg.NewTicketRepo(db)
+	showRepo := pg.NewShowRepo(db)
 
 	spreadsheetsAPI := spreadsheetapi.NewClient(apiClients)
 	receiptsService := receiptsvc.NewClient(apiClients)
@@ -90,9 +92,12 @@ func New() Service {
 	postTicketStatusUseCase := ticket.NewPostStatus(eventBus)
 	listTicketsUseCase := ticket.NewList(ticketRepo)
 
+	createShowUseCase := show.NewCreate(showRepo)
+
 	httpRouter := httpRouter.New(
 		postTicketStatusUseCase,
 		listTicketsUseCase,
+		createShowUseCase,
 	)
 
 	svc := Service{
