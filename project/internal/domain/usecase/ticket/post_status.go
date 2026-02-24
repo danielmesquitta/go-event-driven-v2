@@ -1,4 +1,4 @@
-package usecase
+package ticket
 
 import (
 	"context"
@@ -13,23 +13,23 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type PostTicketStatus struct {
+type PostStatus struct {
 	eventBus eventbus.EventBus
 }
 
-func NewPostTicketStatus(
+func NewPostStatus(
 	eventBus eventbus.EventBus,
-) *PostTicketStatus {
-	return &PostTicketStatus{
+) *PostStatus {
+	return &PostStatus{
 		eventBus: eventBus,
 	}
 }
 
-type PostTicketStatusInput struct {
+type PostStatusInput struct {
 	Tickets []entity.Ticket `json:"tickets"         validate:"required,dive"`
 }
 
-func (p *PostTicketStatus) Execute(ctx context.Context, in PostTicketStatusInput) error {
+func (p *PostStatus) Execute(ctx context.Context, in PostStatusInput) error {
 	err := validator.Validate(ctx, in)
 	if err != nil {
 		return err
@@ -37,10 +37,10 @@ func (p *PostTicketStatus) Execute(ctx context.Context, in PostTicketStatusInput
 
 	g, gCtx := errgroup.WithContext(ctx)
 
-	for _, ticket := range in.Tickets {
+	for _, t := range in.Tickets {
 		g.Go(func() error {
 			return p.postTicketStatus(gCtx, postTicketStatusInput{
-				Ticket: ticket,
+				Ticket: t,
 			})
 		})
 	}
@@ -52,7 +52,7 @@ type postTicketStatusInput struct {
 	Ticket entity.Ticket
 }
 
-func (p *PostTicketStatus) postTicketStatus(ctx context.Context, in postTicketStatusInput) error {
+func (p *PostStatus) postTicketStatus(ctx context.Context, in postTicketStatusInput) error {
 	idempotencyKey := ctxval.GetIdempotencyKey(ctx) + "-" + in.Ticket.ID
 	ctx = ctxval.WithIdempotencyKey(ctx, idempotencyKey)
 

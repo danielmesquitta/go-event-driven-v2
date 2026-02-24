@@ -14,7 +14,8 @@ import (
 	httpRouter "tickets/internal/app/http/router"
 	"tickets/internal/app/pubsub/handler"
 	pubSubRouter "tickets/internal/app/pubsub/router"
-	"tickets/internal/domain/usecase"
+	"tickets/internal/domain/usecase/ticket"
+	"tickets/internal/domain/usecase/tracker"
 	"tickets/internal/pkg/ctxval"
 	"tickets/internal/provider/db"
 	"tickets/internal/provider/eventbus/redisstream"
@@ -57,22 +58,22 @@ func New() Service {
 
 	eventBus := redisstream.NewEventBus()
 
-	appendCanceledBookingToTrackerUseCase := usecase.NewAppendCanceledBookingToTracker(spreadsheetsAPI)
+	appendCanceledBookingToTrackerUseCase := tracker.NewAppendCanceledBooking(spreadsheetsAPI)
 	appendCanceledBookingToTrackerHandler := handler.NewAppendCanceledBookingToTracker(appendCanceledBookingToTrackerUseCase)
 
-	appendConfirmedBookingToTrackerUseCase := usecase.NewAppendConfirmedBookingToTracker(spreadsheetsAPI)
+	appendConfirmedBookingToTrackerUseCase := tracker.NewAppendConfirmedBooking(spreadsheetsAPI)
 	appendConfirmedBookingToTrackerHandler := handler.NewAppendConfirmedBookingToTracker(appendConfirmedBookingToTrackerUseCase)
 
-	issueReceiptUseCase := usecase.NewIssueReceipt(receiptsService)
+	issueReceiptUseCase := ticket.NewIssueReceipt(receiptsService)
 	issueReceiptHandler := handler.NewIssueReceipt(issueReceiptUseCase)
 
-	createTicketUseCase := usecase.NewCreateTicket(ticketRepo)
+	createTicketUseCase := ticket.NewCreate(ticketRepo)
 	createTicketHandler := handler.NewCreateTicket(createTicketUseCase)
 
-	deleteTicketUseCase := usecase.NewDeleteTicket(ticketRepo)
+	deleteTicketUseCase := ticket.NewDelete(ticketRepo)
 	deleteTicketHandler := handler.NewDeleteTicket(deleteTicketUseCase)
 
-	printTicketUseCase := usecase.NewPrintTicket(fileStorageClient, eventBus)
+	printTicketUseCase := ticket.NewPrint(fileStorageClient, eventBus)
 	printTicketHandler := handler.NewPrintTicket(printTicketUseCase)
 
 	pubSubRouter := pubSubRouter.NewRouter(
@@ -85,8 +86,8 @@ func New() Service {
 		printTicketHandler,
 	)
 
-	postTicketStatusUseCase := usecase.NewPostTicketStatus(eventBus)
-	listTicketsUseCase := usecase.NewListTickets(ticketRepo)
+	postTicketStatusUseCase := ticket.NewPostStatus(eventBus)
+	listTicketsUseCase := ticket.NewList(ticketRepo)
 
 	httpRouter := httpRouter.New(
 		postTicketStatusUseCase,

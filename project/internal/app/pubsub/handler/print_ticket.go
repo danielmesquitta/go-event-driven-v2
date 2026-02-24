@@ -3,19 +3,19 @@ package handler
 import (
 	"context"
 	"tickets/internal/app/pubsub/event"
-	"tickets/internal/domain/usecase"
+	"tickets/internal/domain/usecase/ticket"
 )
 
 type PrintTicket struct {
-	printTicketUseCase *usecase.PrintTicket
+	printTicketUseCase *ticket.Print
 }
 
-func NewPrintTicket(printTicketUseCase *usecase.PrintTicket) *PrintTicket {
+func NewPrintTicket(printTicketUseCase *ticket.Print) *PrintTicket {
 	return &PrintTicket{printTicketUseCase: printTicketUseCase}
 }
 
 func (p *PrintTicket) Handle(ctx context.Context, event *event.TicketBookingConfirmed) error {
-	return p.printTicketUseCase.Execute(ctx, usecase.PrintTicketInput{
+	return p.printTicketUseCase.Execute(ctx, ticket.PrintInput{
 		TicketID: event.TicketID,
 		Price:    event.Price,
 	})

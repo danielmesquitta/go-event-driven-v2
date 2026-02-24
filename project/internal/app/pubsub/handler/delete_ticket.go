@@ -3,19 +3,19 @@ package handler
 import (
 	"context"
 	"tickets/internal/app/pubsub/event"
-	"tickets/internal/domain/usecase"
+	"tickets/internal/domain/usecase/ticket"
 )
 
 type DeleteTicket struct {
-	deleteTicketUseCase *usecase.DeleteTicket
+	deleteTicketUseCase *ticket.Delete
 }
 
-func NewDeleteTicket(deleteTicketUseCase *usecase.DeleteTicket) *DeleteTicket {
+func NewDeleteTicket(deleteTicketUseCase *ticket.Delete) *DeleteTicket {
 	return &DeleteTicket{deleteTicketUseCase: deleteTicketUseCase}
 }
 
 func (c *DeleteTicket) Handle(ctx context.Context, event *event.TicketBookingCanceled) error {
-	err := c.deleteTicketUseCase.Execute(ctx, usecase.DeleteTicketInput{
+	err := c.deleteTicketUseCase.Execute(ctx, ticket.DeleteInput{
 		TicketID: event.TicketID,
 	})
 	if err != nil {

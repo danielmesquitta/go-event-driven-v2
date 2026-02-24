@@ -1,4 +1,4 @@
-package usecase
+package ticket
 
 import (
 	"context"
@@ -11,27 +11,27 @@ import (
 	"tickets/internal/provider/filestorage"
 )
 
-type PrintTicket struct {
+type Print struct {
 	fileStorage filestorage.Storage
 	eventBus    eventbus.EventBus
 }
 
-func NewPrintTicket(
+func NewPrint(
 	fileStorage filestorage.Storage,
 	eventBus eventbus.EventBus,
-) *PrintTicket {
-	return &PrintTicket{
+) *Print {
+	return &Print{
 		fileStorage: fileStorage,
 		eventBus:    eventBus,
 	}
 }
 
-type PrintTicketInput struct {
+type PrintInput struct {
 	TicketID string       `json:"ticket_id" validate:"required"`
 	Price    entity.Money `json:"price" validate:"required"`
 }
 
-func (p *PrintTicket) Execute(ctx context.Context, in PrintTicketInput) error {
+func (p *Print) Execute(ctx context.Context, in PrintInput) error {
 	err := validator.Validate(ctx, in)
 	if err != nil {
 		return err

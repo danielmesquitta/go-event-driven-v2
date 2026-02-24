@@ -3,19 +3,19 @@ package handler
 import (
 	"net/http"
 	"tickets/internal/domain/entity"
-	"tickets/internal/domain/usecase"
+	"tickets/internal/domain/usecase/ticket"
 
 	"github.com/labstack/echo/v4"
 )
 
 type TicketHandler struct {
-	postTicketStatusUseCase *usecase.PostTicketStatus
-	listTicketsUseCase      *usecase.ListTickets
+	postTicketStatusUseCase *ticket.PostStatus
+	listTicketsUseCase      *ticket.List
 }
 
 func NewTicketHandler(
-	postTicketStatusUseCase *usecase.PostTicketStatus,
-	listTicketsUseCase *usecase.ListTickets,
+	postTicketStatusUseCase *ticket.PostStatus,
+	listTicketsUseCase *ticket.List,
 ) *TicketHandler {
 	return &TicketHandler{
 		postTicketStatusUseCase: postTicketStatusUseCase,
@@ -49,16 +49,16 @@ func (h TicketHandler) PostTicketsStatus(c echo.Context) error {
 	}
 
 	tickets := make([]entity.Ticket, len(req.Tickets))
-	for i, ticket := range req.Tickets {
+	for i, t := range req.Tickets {
 		tickets[i] = entity.Ticket{
-			ID:            ticket.TicketID,
-			Status:        entity.TicketStatus(ticket.Status),
-			Price:         ticket.Price,
-			CustomerEmail: ticket.CustomerEmail,
+			ID:            t.TicketID,
+			Status:        entity.TicketStatus(t.Status),
+			Price:         t.Price,
+			CustomerEmail: t.CustomerEmail,
 		}
 	}
 
-	err = h.postTicketStatusUseCase.Execute(c.Request().Context(), usecase.PostTicketStatusInput{
+	err = h.postTicketStatusUseCase.Execute(c.Request().Context(), ticket.PostStatusInput{
 		Tickets: tickets,
 	})
 	if err != nil {

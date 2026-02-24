@@ -1,4 +1,4 @@
-package usecase
+package tracker
 
 import (
 	"context"
@@ -7,21 +7,21 @@ import (
 	"tickets/internal/provider/spreadsheet"
 )
 
-type AppendCanceledBookingToTracker struct {
+type AppendCanceledBooking struct {
 	spreadsheetAPI spreadsheet.API
 }
 
-func NewAppendCanceledBookingToTracker(spreadsheetAPI spreadsheet.API) *AppendCanceledBookingToTracker {
-	return &AppendCanceledBookingToTracker{spreadsheetAPI: spreadsheetAPI}
+func NewAppendCanceledBooking(spreadsheetAPI spreadsheet.API) *AppendCanceledBooking {
+	return &AppendCanceledBooking{spreadsheetAPI: spreadsheetAPI}
 }
 
-type AppendCanceledBookingToTrackerInput struct {
+type AppendCanceledBookingInput struct {
 	TicketID      string       `json:"ticket_id" validate:"required"`
 	CustomerEmail string       `json:"customer_email" validate:"required"`
 	Price         entity.Money `json:"price" validate:"required"`
 }
 
-func (a *AppendCanceledBookingToTracker) Execute(ctx context.Context, in AppendCanceledBookingToTrackerInput) error {
+func (a *AppendCanceledBooking) Execute(ctx context.Context, in AppendCanceledBookingInput) error {
 	err := validator.Validate(ctx, in)
 	if err != nil {
 		return err

@@ -3,15 +3,15 @@ package router
 import (
 	"tickets/internal/app/http/handler"
 	"tickets/internal/app/http/middleware"
-	"tickets/internal/domain/usecase"
+	"tickets/internal/domain/usecase/ticket"
 
 	libHTTP "github.com/ThreeDotsLabs/go-event-driven/v2/common/http"
 	"github.com/labstack/echo/v4"
 )
 
 func New(
-	postTicketStatusUseCase *usecase.PostTicketStatus,
-	listTicketsUseCase *usecase.ListTickets,
+	postTicketStatusUseCase *ticket.PostStatus,
+	listTicketsUseCase *ticket.List,
 ) *echo.Echo {
 	e := libHTTP.NewEcho()
 

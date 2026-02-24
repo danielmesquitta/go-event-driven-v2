@@ -1,4 +1,4 @@
-package usecase
+package ticket
 
 import (
 	"context"
@@ -7,21 +7,21 @@ import (
 	"tickets/internal/provider/repo"
 )
 
-type CreateTicket struct {
+type Create struct {
 	ticketRepo repo.TicketRepo
 }
 
-func NewCreateTicket(ticketRepo repo.TicketRepo) *CreateTicket {
-	return &CreateTicket{ticketRepo: ticketRepo}
+func NewCreate(ticketRepo repo.TicketRepo) *Create {
+	return &Create{ticketRepo: ticketRepo}
 }
 
-type CreateTicketInput struct {
+type CreateInput struct {
 	TicketID      string       `json:"ticket_id" validate:"required"`
 	Price         entity.Money `json:"price" validate:"required"`
 	CustomerEmail string       `json:"customer_email" validate:"required"`
 }
 
-func (c *CreateTicket) Execute(ctx context.Context, in CreateTicketInput) error {
+func (c *Create) Execute(ctx context.Context, in CreateInput) error {
 	err := validator.Validate(ctx, in)
 	if err != nil {
 		return err

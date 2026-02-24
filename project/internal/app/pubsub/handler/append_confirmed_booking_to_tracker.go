@@ -3,15 +3,15 @@ package handler
 import (
 	"context"
 	"tickets/internal/app/pubsub/event"
-	"tickets/internal/domain/usecase"
+	"tickets/internal/domain/usecase/tracker"
 )
 
 type AppendConfirmedBookingToTracker struct {
-	appendConfirmedBookingToTrackerUseCase *usecase.AppendConfirmedBookingToTracker
+	appendConfirmedBookingToTrackerUseCase *tracker.AppendConfirmedBooking
 }
 
 func NewAppendConfirmedBookingToTracker(
-	appendConfirmedBookingToTrackerUseCase *usecase.AppendConfirmedBookingToTracker,
+	appendConfirmedBookingToTrackerUseCase *tracker.AppendConfirmedBooking,
 ) *AppendConfirmedBookingToTracker {
 	return &AppendConfirmedBookingToTracker{
 		appendConfirmedBookingToTrackerUseCase: appendConfirmedBookingToTrackerUseCase,
@@ -21,7 +21,7 @@ func NewAppendConfirmedBookingToTracker(
 func (a *AppendConfirmedBookingToTracker) Handle(ctx context.Context, event *event.TicketBookingConfirmed) error {
 	err := a.appendConfirmedBookingToTrackerUseCase.Execute(
 		ctx,
-		usecase.AppendConfirmedBookingToTrackerInput{
+		tracker.AppendConfirmedBookingInput{
 			TicketID:      event.TicketID,
 			CustomerEmail: event.CustomerEmail,
 			Price:         event.Price,

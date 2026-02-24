@@ -1,4 +1,4 @@
-package usecase
+package ticket
 
 import (
 	"context"
@@ -6,19 +6,19 @@ import (
 	"tickets/internal/provider/repo"
 )
 
-type DeleteTicket struct {
+type Delete struct {
 	ticketRepo repo.TicketRepo
 }
 
-func NewDeleteTicket(ticketRepo repo.TicketRepo) *DeleteTicket {
-	return &DeleteTicket{ticketRepo: ticketRepo}
+func NewDelete(ticketRepo repo.TicketRepo) *Delete {
+	return &Delete{ticketRepo: ticketRepo}
 }
 
-type DeleteTicketInput struct {
+type DeleteInput struct {
 	TicketID string `json:"ticket_id" validate:"required"`
 }
 
-func (c *DeleteTicket) Execute(ctx context.Context, in DeleteTicketInput) error {
+func (c *Delete) Execute(ctx context.Context, in DeleteInput) error {
 	err := validator.Validate(ctx, in)
 	if err != nil {
 		return err
