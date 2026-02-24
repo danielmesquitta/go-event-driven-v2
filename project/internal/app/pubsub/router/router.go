@@ -2,6 +2,7 @@ package router
 
 import (
 	"context"
+	"tickets/internal/app/pubsub/event"
 	"tickets/internal/app/pubsub/handler"
 	pubSubMiddleware "tickets/internal/app/pubsub/middleware"
 	"tickets/internal/pkg/log"
@@ -62,19 +63,42 @@ func (r *Router) Run(
 		pubSubMiddleware.IdempotencyKey,
 	)
 
-	// TicketBookingCanceled
-	eventbus.AddHandler(r.eventBus, r.issueReceiptHandler.Handle)
-	eventbus.AddHandler(r.eventBus, r.deleteTicketHandler.Handle)
+	r.registerTicketBookingCanceledHandlers([]eventbus.HandlerFunc[event.TicketBookingCanceled]{
+		r.deleteTicketHandler.Handle,
+		r.appendCanceledBookingToTrackerHandler.Handle,
+	})
 
-	// TicketBookingConfirmed
-	eventbus.AddHandler(r.eventBus, r.appendCanceledBookingToTrackerHandler.Handle)
-	eventbus.AddHandler(r.eventBus, r.appendConfirmedBookingToTrackerHandler.Handle)
-	eventbus.AddHandler(r.eventBus, r.createTicketHandler.Handle)
-	eventbus.AddHandler(r.eventBus, r.printTicketHandler.Handle)
+	r.registerTicketBookingConfirmedHandlers([]eventbus.HandlerFunc[event.TicketBookingConfirmed]{
+		r.appendConfirmedBookingToTrackerHandler.Handle,
+		r.createTicketHandler.Handle,
+		r.printTicketHandler.Handle,
+		r.issueReceiptHandler.Handle,
+	})
 
 	return r.eventBus.Run(ctx)
 }
 
 func (r *Router) Running() chan struct{} {
 	return r.eventBus.Running()
+}
+
+func (r *Router) registerTicketBookingCanceledHandlers(
+	handlerFuncs []eventbus.HandlerFunc[event.TicketBookingCanceled],
+) {
+	registerHandlers(r.eventBus, handlerFuncs)
+}
+
+func (r *Router) registerTicketBookingConfirmedHandlers(
+	handlerFuncs []eventbus.HandlerFunc[event.TicketBookingConfirmed],
+) {
+	registerHandlers(r.eventBus, handlerFuncs)
+}
+
+func registerHandlers[T any](
+	eventBus eventbus.EventBus,
+	handlerFuncs []eventbus.HandlerFunc[T],
+) {
+	for _, handlerFunc := range handlerFuncs {
+		eventbus.AddHandler(eventBus, handlerFunc)
+	}
 }
