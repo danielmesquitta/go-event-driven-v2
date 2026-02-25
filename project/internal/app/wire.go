@@ -10,6 +10,7 @@ import (
 	"tickets/internal/app/pubsub/handler/bookingcanceled"
 	"tickets/internal/app/pubsub/handler/bookingconfirmed"
 	pubSubRouter "tickets/internal/app/pubsub/router"
+	"tickets/internal/domain/usecase/booking"
 	"tickets/internal/domain/usecase/show"
 	"tickets/internal/domain/usecase/ticket"
 	"tickets/internal/domain/usecase/tracker"
@@ -29,23 +30,27 @@ import (
 
 func New() Service {
 	wire.Build(
+		// Repos
+		pg.NewTicketRepo,
+		wire.Bind(new(repo.TicketRepo), new(*pg.TicketRepo)),
+		pg.NewShowRepo,
+		wire.Bind(new(repo.ShowRepo), new(*pg.ShowRepo)),
+		pg.NewBookingRepo,
+		wire.Bind(new(repo.BookingRepo), new(*pg.BookingRepo)),
+
+		// Providers
 		gateway.NewGateway,
 		db.NewDB,
-		redisstream.NewEventBus,
-
-		pg.NewTicketRepo,
-		pg.NewShowRepo,
-		wire.Bind(new(repo.TicketRepo), new(*pg.TicketRepo)),
-		wire.Bind(new(repo.ShowRepo), new(*pg.ShowRepo)),
-
-		spreadsheetapi.NewClient,
-		receiptsvc.NewClient,
 		filestorageapi.NewClient,
 		wire.Bind(new(spreadsheet.API), new(*spreadsheetapi.Client)),
+		receiptsvc.NewClient,
 		wire.Bind(new(receipt.Service), new(*receiptsvc.Client)),
+		spreadsheetapi.NewClient,
 		wire.Bind(new(filestorage.Storage), new(*filestorageapi.Client)),
+		redisstream.NewEventBus,
 		wire.Bind(new(eventbus.EventBus), new(*redisstream.EventBus)),
 
+		// Usecases
 		tracker.NewAppendCanceledBooking,
 		tracker.NewAppendConfirmedBooking,
 		ticket.NewIssueReceipt,
@@ -55,7 +60,9 @@ func New() Service {
 		ticket.NewPostStatus,
 		ticket.NewList,
 		show.NewCreate,
+		booking.NewCreate,
 
+		// PubSub handlers
 		bookingcanceled.NewAppendToTracker,
 		bookingcanceled.NewDeleteTicket,
 		bookingconfirmed.NewAppendToTracker,
@@ -63,11 +70,13 @@ func New() Service {
 		bookingconfirmed.NewCreateTicket,
 		bookingconfirmed.NewPrintTicket,
 
+		// HTTP handlers
 		pubSubRouter.NewRouter,
 		httpRouter.New,
 		handler.NewShowHandler,
 		handler.NewTicketHandler,
 		handler.NewHealthHandler,
+		handler.NewBookingHandler,
 
 		wire.Struct(new(Service), "*"),
 	)

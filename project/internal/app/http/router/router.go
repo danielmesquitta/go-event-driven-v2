@@ -12,6 +12,7 @@ func New(
 	showHandler *handler.ShowHandler,
 	ticketHandler *handler.TicketHandler,
 	healthHandler *handler.HealthHandler,
+	bookingHandler *handler.BookingHandler,
 ) *echo.Echo {
 	e := libHTTP.NewEcho()
 
@@ -26,6 +27,8 @@ func New(
 
 	e.POST("/tickets-status", ticketHandler.PostTicketsStatus)
 	e.GET("/tickets", ticketHandler.ListTickets)
+
+	e.POST("/book-tickets", bookingHandler.CreateBooking)
 
 	return e
 }

@@ -12,6 +12,7 @@ import (
 	"tickets/internal/app/pubsub/handler/bookingcanceled"
 	"tickets/internal/app/pubsub/handler/bookingconfirmed"
 	router2 "tickets/internal/app/pubsub/router"
+	"tickets/internal/domain/usecase/booking"
 	"tickets/internal/domain/usecase/show"
 	"tickets/internal/domain/usecase/ticket"
 	"tickets/internal/domain/usecase/tracker"
@@ -37,7 +38,10 @@ func New() Service {
 	list := ticket.NewList(ticketRepo)
 	ticketHandler := handler.NewTicketHandler(postStatus, list)
 	healthHandler := handler.NewHealthHandler()
-	echo := router.New(showHandler, ticketHandler, healthHandler)
+	bookingRepo := pg.NewBookingRepo(dbDB)
+	bookingCreate := booking.NewCreate(bookingRepo)
+	bookingHandler := handler.NewBookingHandler(bookingCreate)
+	echo := router.New(showHandler, ticketHandler, healthHandler, bookingHandler)
 	clients := gateway.NewGateway()
 	client := spreadsheetapi.NewClient(clients)
 	appendCanceledBooking := tracker.NewAppendCanceledBooking(client)

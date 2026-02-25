@@ -1,4 +1,4 @@
-exercise_id = "9d4b03d3-0749-4a95-8b20-17323ad232bf"
-directory = "project"
-is_text_only = false
+exercise_id = "0fd4624e-cf29-4f0f-b41e-097b3ed639e3"
+directory = "11-outbox/04-outbox-theory"
+is_text_only = true
 is_optional = false

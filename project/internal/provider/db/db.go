@@ -54,6 +54,14 @@ func (d *DB) InitializeSchema(ctx context.Context) error {
 
 			UNIQUE (dead_nation_id)
 		);
+
+		CREATE TABLE IF NOT EXISTS bookings (
+				id UUID PRIMARY KEY,
+				show_id UUID NOT NULL,
+				number_of_tickets INT NOT NULL,
+				customer_email VARCHAR(255) NOT NULL,
+				FOREIGN KEY (show_id) REFERENCES shows(id)
+		);
 	`)
 	if err != nil {
 		return fmt.Errorf("failed to initialize schema: %w", err)
