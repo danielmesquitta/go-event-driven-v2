@@ -1,4 +1,4 @@
-exercise_id = "0fd4624e-cf29-4f0f-b41e-097b3ed639e3"
-directory = "11-outbox/04-outbox-theory"
-is_text_only = true
+exercise_id = "fcc2ef7f-8ec2-4387-9223-ebd6552b8c59"
+directory = "11-outbox/05-publishing-events-in-transaction"
+is_text_only = false
 is_optional = false
