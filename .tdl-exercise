@@ -1,4 +1,4 @@
-exercise_id = "fcc2ef7f-8ec2-4387-9223-ebd6552b8c59"
-directory = "11-outbox/05-publishing-events-in-transaction"
+exercise_id = "e85d8d0f-d7f9-4d3a-aed0-2a7bb3609303"
+directory = "11-outbox/06-subscribing-to-sql"
 is_text_only = false
 is_optional = false
