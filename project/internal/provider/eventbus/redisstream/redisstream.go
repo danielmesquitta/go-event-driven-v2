@@ -22,6 +22,7 @@ type EventBus struct {
 	processor *cqrs.EventProcessor
 	bus       *cqrs.EventBus
 	router    *message.Router
+	pub       message.Publisher
 }
 
 func NewEventBus() *EventBus {
@@ -77,6 +78,7 @@ func NewEventBus() *EventBus {
 		bus:       bus,
 		processor: processor,
 		router:    router,
+		pub:       pub,
 	}
 }
 

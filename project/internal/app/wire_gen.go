@@ -20,6 +20,7 @@ import (
 	"tickets/internal/provider/eventbus/redisstream"
 	"tickets/internal/provider/filestorage/filestorageapi"
 	"tickets/internal/provider/gateway"
+	pg2 "tickets/internal/provider/outbox/pg"
 	"tickets/internal/provider/receipt/receiptsvc"
 	"tickets/internal/provider/repo/pg"
 	"tickets/internal/provider/spreadsheet/spreadsheetapi"
@@ -59,10 +60,12 @@ func New() Service {
 	ticketPrint := ticket.NewPrint(filestorageapiClient, eventBus)
 	printTicket := bookingconfirmed.NewPrintTicket(ticketPrint)
 	routerRouter := router2.NewRouter(eventBus, appendToTracker, bookingconfirmedAppendToTracker, bookingconfirmedIssueReceipt, createTicket, deleteTicket, printTicket)
+	outbox := pg2.New(dbDB, eventBus)
 	service := Service{
 		db:           dbDB,
 		httpRouter:   echo,
 		pubSubRouter: routerRouter,
+		outbox:       outbox,
 	}
 	return service
 }

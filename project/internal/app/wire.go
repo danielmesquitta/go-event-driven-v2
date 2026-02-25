@@ -20,10 +20,12 @@ import (
 	"tickets/internal/provider/filestorage"
 	"tickets/internal/provider/filestorage/filestorageapi"
 	"tickets/internal/provider/gateway"
+	"tickets/internal/provider/outbox"
+	pgOutbox "tickets/internal/provider/outbox/pg"
 	"tickets/internal/provider/receipt"
 	"tickets/internal/provider/receipt/receiptsvc"
 	"tickets/internal/provider/repo"
-	"tickets/internal/provider/repo/pg"
+	pgRepo "tickets/internal/provider/repo/pg"
 	"tickets/internal/provider/spreadsheet"
 	"tickets/internal/provider/spreadsheet/spreadsheetapi"
 )
@@ -31,12 +33,12 @@ import (
 func New() Service {
 	wire.Build(
 		// Repos
-		pg.NewTicketRepo,
-		wire.Bind(new(repo.TicketRepo), new(*pg.TicketRepo)),
-		pg.NewShowRepo,
-		wire.Bind(new(repo.ShowRepo), new(*pg.ShowRepo)),
-		pg.NewBookingRepo,
-		wire.Bind(new(repo.BookingRepo), new(*pg.BookingRepo)),
+		pgRepo.NewTicketRepo,
+		wire.Bind(new(repo.TicketRepo), new(*pgRepo.TicketRepo)),
+		pgRepo.NewShowRepo,
+		wire.Bind(new(repo.ShowRepo), new(*pgRepo.ShowRepo)),
+		pgRepo.NewBookingRepo,
+		wire.Bind(new(repo.BookingRepo), new(*pgRepo.BookingRepo)),
 
 		// Providers
 		gateway.NewGateway,
@@ -49,6 +51,8 @@ func New() Service {
 		wire.Bind(new(filestorage.Storage), new(*filestorageapi.Client)),
 		redisstream.NewEventBus,
 		wire.Bind(new(eventbus.EventBus), new(*redisstream.EventBus)),
+		pgOutbox.New,
+		wire.Bind(new(outbox.Outbox), new(*pgOutbox.Outbox)),
 
 		// Usecases
 		tracker.NewAppendCanceledBooking,

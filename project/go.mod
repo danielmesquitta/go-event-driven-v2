@@ -17,6 +17,8 @@ require (
 	golang.org/x/sync v0.19.0
 )
 
+require github.com/ThreeDotsLabs/watermill-sql/v3 v3.1.0
+
 require (
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/CloudyKit/fastprinter v0.0.0-20251202014920-1725d2651bd4 // indirect

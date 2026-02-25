@@ -18,6 +18,9 @@ type EventBus interface {
 
 	// Running returns a channel that is closed when the pubsub system is started.
 	Running() chan struct{}
+
+	Router() *message.Router
+	Publisher() message.Publisher
 }
 
 type HandlerFunc[T any] func(ctx context.Context, event *T) error

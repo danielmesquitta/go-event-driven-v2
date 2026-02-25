@@ -12,12 +12,14 @@ import (
 
 	pubSubRouter "tickets/internal/app/pubsub/router"
 	"tickets/internal/provider/db"
+	"tickets/internal/provider/outbox"
 )
 
 type Service struct {
 	db           *db.DB
 	httpRouter   *echo.Echo
 	pubSubRouter *pubSubRouter.Router
+	outbox       outbox.Outbox
 }
 
 func (s Service) Run(ctx context.Context) error {
