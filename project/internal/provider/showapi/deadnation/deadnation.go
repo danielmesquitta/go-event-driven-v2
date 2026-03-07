@@ -34,7 +34,7 @@ func (d *DeadNationAPI) PostTicketBooking(ctx context.Context, booking showapi.B
 		EventId:         eventID,
 		NumberOfTickets: booking.NumberOfTickets,
 		CustomerAddress: booking.CustomerEmail,
-	}, nil)
+	})
 	if err != nil {
 		return fmt.Errorf("failed to get show: %w", err)
 	}
