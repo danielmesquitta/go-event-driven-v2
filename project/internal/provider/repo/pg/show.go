@@ -2,6 +2,8 @@ package pg
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"tickets/internal/domain/entity"
 	"tickets/internal/provider/db"
@@ -25,4 +27,21 @@ func (r *ShowRepo) Create(ctx context.Context, show *entity.Show) error {
 		return fmt.Errorf("failed to create show: %w", err)
 	}
 	return nil
+}
+
+func (r *ShowRepo) Get(ctx context.Context, id string) (*entity.Show, error) {
+	var show entity.Show
+	err := r.db.WithTx(ctx).GetContext(ctx, &show, `
+		SELECT *
+		FROM shows
+		WHERE id = $1
+		LIMIT 1
+	`, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get show: %w", err)
+	}
+	return &show, nil
 }

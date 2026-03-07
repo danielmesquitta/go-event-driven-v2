@@ -41,7 +41,7 @@ func (r *TicketRepo) Create(ctx context.Context, ticket *entity.Ticket) error {
 func (r *TicketRepo) Get(ctx context.Context, id string) (*entity.Ticket, error) {
 	var ticket Ticket
 	err := r.db.WithTx(ctx).GetContext(ctx, &ticket, `
-		SELECT id, price_amount, price_currency, customer_email
+		SELECT *
 		FROM tickets
 		WHERE id = $1
 		LIMIT 1
@@ -66,7 +66,7 @@ func (r *TicketRepo) Get(ctx context.Context, id string) (*entity.Ticket, error)
 func (r *TicketRepo) List(ctx context.Context) ([]entity.Ticket, error) {
 	var tickets []Ticket
 	err := r.db.WithTx(ctx).SelectContext(ctx, &tickets, `
-		SELECT id, price_amount, price_currency, customer_email
+		SELECT *
 		FROM tickets
 	`)
 	if err != nil {

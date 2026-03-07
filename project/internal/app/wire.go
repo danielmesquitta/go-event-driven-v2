@@ -9,6 +9,7 @@ import (
 	httpRouter "tickets/internal/app/http/router"
 	"tickets/internal/app/pubsub/handler/bookingcanceled"
 	"tickets/internal/app/pubsub/handler/bookingconfirmed"
+	"tickets/internal/app/pubsub/handler/bookingmade"
 	pubSubRouter "tickets/internal/app/pubsub/router"
 	"tickets/internal/domain/usecase/booking"
 	"tickets/internal/domain/usecase/show"
@@ -27,6 +28,8 @@ import (
 	"tickets/internal/provider/receipt/receiptsvc"
 	"tickets/internal/provider/repo"
 	pgRepo "tickets/internal/provider/repo/pg"
+	"tickets/internal/provider/showapi"
+	"tickets/internal/provider/showapi/deadnation"
 	"tickets/internal/provider/spreadsheet"
 	"tickets/internal/provider/spreadsheet/spreadsheetapi"
 )
@@ -59,6 +62,8 @@ func New() Service {
 		wire.Bind(new(eventbus.EventBus), new(*redisstream.EventBus)),
 		pgOutbox.New,
 		wire.Bind(new(outbox.Outbox), new(*pgOutbox.Outbox)),
+		deadnation.New,
+		wire.Bind(new(showapi.ShowAPI), new(*deadnation.DeadNationAPI)),
 
 		// Usecases
 		tracker.NewAppendCanceledBooking,
@@ -71,6 +76,7 @@ func New() Service {
 		ticket.NewList,
 		show.NewCreate,
 		booking.NewCreate,
+		booking.NewPostTicketBookingToDeadNation,
 
 		// PubSub handlers
 		bookingcanceled.NewAppendToTracker,
@@ -79,6 +85,7 @@ func New() Service {
 		bookingconfirmed.NewIssueReceipt,
 		bookingconfirmed.NewCreateTicket,
 		bookingconfirmed.NewPrintTicket,
+		bookingmade.NewPostTicketBookingToDeadNation,
 
 		// HTTP handlers
 		pubSubRouter.NewRouter,

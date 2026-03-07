@@ -11,6 +11,7 @@ import (
 	"tickets/internal/app/http/router"
 	"tickets/internal/app/pubsub/handler/bookingcanceled"
 	"tickets/internal/app/pubsub/handler/bookingconfirmed"
+	"tickets/internal/app/pubsub/handler/bookingmade"
 	router2 "tickets/internal/app/pubsub/router"
 	"tickets/internal/domain/usecase/booking"
 	"tickets/internal/domain/usecase/show"
@@ -24,6 +25,7 @@ import (
 	pg2 "tickets/internal/provider/outbox/pg"
 	"tickets/internal/provider/receipt/receiptsvc"
 	"tickets/internal/provider/repo/pg"
+	"tickets/internal/provider/showapi/deadnation"
 	"tickets/internal/provider/spreadsheet/spreadsheetapi"
 )
 
@@ -63,7 +65,10 @@ func New() Service {
 	filestorageapiClient := filestorageapi.NewClient(clients)
 	ticketPrint := ticket.NewPrint(filestorageapiClient, eventBus)
 	printTicket := bookingconfirmed.NewPrintTicket(ticketPrint)
-	routerRouter := router2.NewRouter(eventBus, appendToTracker, bookingconfirmedAppendToTracker, bookingconfirmedIssueReceipt, createTicket, deleteTicket, printTicket)
+	deadNationAPI := deadnation.New(clients)
+	mapShowIdToDeadNationEventId := booking.NewPostTicketBookingToDeadNation(showRepo, deadNationAPI)
+	bookingmadePostTicketBookingToDeadNation := bookingmade.NewPostTicketBookingToDeadNation(mapShowIdToDeadNationEventId)
+	routerRouter := router2.NewRouter(eventBus, appendToTracker, bookingconfirmedAppendToTracker, bookingconfirmedIssueReceipt, createTicket, deleteTicket, printTicket, bookingmadePostTicketBookingToDeadNation)
 	service := Service{
 		db:           dbDB,
 		httpRouter:   echo,
