@@ -16,7 +16,7 @@ func NewShowRepo(db *db.DB) *ShowRepo {
 }
 
 func (r *ShowRepo) Create(ctx context.Context, show *entity.Show) error {
-	_, err := r.db.DB.ExecContext(ctx, `
+	_, err := r.db.WithTx(ctx).ExecContext(ctx, `
 		INSERT INTO shows (id, dead_nation_id, number_of_tickets, start_time, title, venue)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT DO NOTHING

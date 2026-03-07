@@ -2,8 +2,10 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
+	"tickets/internal/pkg/tx"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -16,12 +18,11 @@ type DB struct {
 	*sqlx.DB
 }
 
-func NewDB() *DB {
+func NewSQLXDB() *sqlx.DB {
 	db, err := sqlx.Open("postgres", os.Getenv("POSTGRES_URL"))
 	if err != nil {
 		panic(err)
 	}
-
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -29,7 +30,10 @@ func NewDB() *DB {
 	if err := db.PingContext(ctx); err != nil {
 		panic(err)
 	}
+	return db
+}
 
+func NewDB(db *sqlx.DB) *DB {
 	return &DB{
 		DB: db,
 	}
@@ -68,4 +72,18 @@ func (d *DB) InitializeSchema(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+type DBTX interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	GetContext(ctx context.Context, dest any, query string, args ...any) error
+	SelectContext(ctx context.Context, dest any, query string, args ...any) error
+}
+
+func (d *DB) WithTx(ctx context.Context) DBTX {
+	sqlxTx, ok := ctx.Value(tx.ContextKey).(*sqlx.Tx)
+	if !ok {
+		return d.DB
+	}
+	return sqlxTx
 }

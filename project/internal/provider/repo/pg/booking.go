@@ -16,7 +16,7 @@ func NewBookingRepo(db *db.DB) *BookingRepo {
 }
 
 func (r *BookingRepo) Create(ctx context.Context, booking *entity.Booking) error {
-	_, err := r.db.DB.ExecContext(ctx, `
+	_, err := r.db.WithTx(ctx).ExecContext(ctx, `
 		INSERT INTO bookings (id, show_id, number_of_tickets, customer_email)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT DO NOTHING

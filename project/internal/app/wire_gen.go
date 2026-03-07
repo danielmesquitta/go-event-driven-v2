@@ -16,6 +16,7 @@ import (
 	"tickets/internal/domain/usecase/show"
 	"tickets/internal/domain/usecase/ticket"
 	"tickets/internal/domain/usecase/tracker"
+	"tickets/internal/pkg/tx"
 	"tickets/internal/provider/db"
 	"tickets/internal/provider/eventbus/redisstream"
 	"tickets/internal/provider/filestorage/filestorageapi"
@@ -29,7 +30,8 @@ import (
 // Injectors from wire.go:
 
 func New() Service {
-	dbDB := db.NewDB()
+	sqlxDB := db.NewSQLXDB()
+	dbDB := db.NewDB(sqlxDB)
 	showRepo := pg.NewShowRepo(dbDB)
 	create := show.NewCreate(showRepo)
 	showHandler := handler.NewShowHandler(create)
@@ -39,8 +41,10 @@ func New() Service {
 	list := ticket.NewList(ticketRepo)
 	ticketHandler := handler.NewTicketHandler(postStatus, list)
 	healthHandler := handler.NewHealthHandler()
+	sqlxTransaction := tx.NewSqlxTransaction(sqlxDB)
 	bookingRepo := pg.NewBookingRepo(dbDB)
-	bookingCreate := booking.NewCreate(bookingRepo)
+	outbox := pg2.New(dbDB, eventBus)
+	bookingCreate := booking.NewCreate(sqlxTransaction, bookingRepo, dbDB, outbox)
 	bookingHandler := handler.NewBookingHandler(bookingCreate)
 	echo := router.New(showHandler, ticketHandler, healthHandler, bookingHandler)
 	clients := gateway.NewGateway()
@@ -60,7 +64,6 @@ func New() Service {
 	ticketPrint := ticket.NewPrint(filestorageapiClient, eventBus)
 	printTicket := bookingconfirmed.NewPrintTicket(ticketPrint)
 	routerRouter := router2.NewRouter(eventBus, appendToTracker, bookingconfirmedAppendToTracker, bookingconfirmedIssueReceipt, createTicket, deleteTicket, printTicket)
-	outbox := pg2.New(dbDB, eventBus)
 	service := Service{
 		db:           dbDB,
 		httpRouter:   echo,

@@ -27,7 +27,7 @@ type Ticket struct {
 }
 
 func (r *TicketRepo) Create(ctx context.Context, ticket *entity.Ticket) error {
-	_, err := r.db.DB.ExecContext(ctx, `
+	_, err := r.db.WithTx(ctx).ExecContext(ctx, `
 		INSERT INTO tickets (id, price_amount, price_currency, customer_email)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT DO NOTHING
@@ -40,7 +40,7 @@ func (r *TicketRepo) Create(ctx context.Context, ticket *entity.Ticket) error {
 
 func (r *TicketRepo) Get(ctx context.Context, id string) (*entity.Ticket, error) {
 	var ticket Ticket
-	err := r.db.DB.GetContext(ctx, &ticket, `
+	err := r.db.WithTx(ctx).GetContext(ctx, &ticket, `
 		SELECT id, price_amount, price_currency, customer_email
 		FROM tickets
 		WHERE id = $1
@@ -65,7 +65,7 @@ func (r *TicketRepo) Get(ctx context.Context, id string) (*entity.Ticket, error)
 
 func (r *TicketRepo) List(ctx context.Context) ([]entity.Ticket, error) {
 	var tickets []Ticket
-	err := r.db.DB.SelectContext(ctx, &tickets, `
+	err := r.db.WithTx(ctx).SelectContext(ctx, &tickets, `
 		SELECT id, price_amount, price_currency, customer_email
 		FROM tickets
 	`)
@@ -91,7 +91,7 @@ func (r *TicketRepo) List(ctx context.Context) ([]entity.Ticket, error) {
 }
 
 func (r *TicketRepo) Delete(ctx context.Context, id string) error {
-	_, err := r.db.DB.ExecContext(ctx, `
+	_, err := r.db.WithTx(ctx).ExecContext(ctx, `
 		DELETE FROM tickets
 		WHERE id = $1
 	`, id)

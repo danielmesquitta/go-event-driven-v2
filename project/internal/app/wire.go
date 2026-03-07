@@ -14,6 +14,7 @@ import (
 	"tickets/internal/domain/usecase/show"
 	"tickets/internal/domain/usecase/ticket"
 	"tickets/internal/domain/usecase/tracker"
+	"tickets/internal/pkg/tx"
 	"tickets/internal/provider/db"
 	"tickets/internal/provider/eventbus"
 	"tickets/internal/provider/eventbus/redisstream"
@@ -40,8 +41,13 @@ func New() Service {
 		pgRepo.NewBookingRepo,
 		wire.Bind(new(repo.BookingRepo), new(*pgRepo.BookingRepo)),
 
+		// Packages
+		tx.NewSqlxTransaction,
+		wire.Bind(new(tx.Transaction), new(*tx.SqlxTransaction)),
+
 		// Providers
 		gateway.NewGateway,
+		db.NewSQLXDB,
 		db.NewDB,
 		filestorageapi.NewClient,
 		wire.Bind(new(spreadsheet.API), new(*spreadsheetapi.Client)),
