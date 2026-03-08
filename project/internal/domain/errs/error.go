@@ -29,6 +29,7 @@ type MetadataKey string
 
 const (
 	MetadataErrorsKey MetadataKey = "errors"
+	MetadataDataKey   MetadataKey = "data"
 )
 
 type Option func(*Error)
@@ -39,6 +40,12 @@ func WithMetadata(key MetadataKey, value any) Option {
 			e.metadata = make(map[MetadataKey]any)
 		}
 		e.metadata[key] = value
+	}
+}
+
+func WithMessage(message string) Option {
+	return func(e *Error) {
+		e.message = fmt.Sprintf("%s: %s", e.message, message)
 	}
 }
 

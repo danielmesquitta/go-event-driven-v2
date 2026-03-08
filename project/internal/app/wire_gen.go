@@ -46,7 +46,7 @@ func New() Service {
 	sqlxTransaction := tx.NewSqlxTransaction(sqlxDB)
 	bookingRepo := pg.NewBookingRepo(dbDB)
 	outbox := pg2.New(dbDB, eventBus)
-	bookingCreate := booking.NewCreate(sqlxTransaction, bookingRepo, dbDB, outbox)
+	bookingCreate := booking.NewCreate(sqlxTransaction, showRepo, bookingRepo, dbDB, outbox)
 	bookingHandler := handler.NewBookingHandler(bookingCreate)
 	echo := router.New(showHandler, ticketHandler, healthHandler, bookingHandler)
 	clients := gateway.NewGateway()
@@ -66,8 +66,8 @@ func New() Service {
 	ticketPrint := ticket.NewPrint(filestorageapiClient, eventBus)
 	printTicket := bookingconfirmed.NewPrintTicket(ticketPrint)
 	deadNationAPI := deadnation.New(clients)
-	mapShowIdToDeadNationEventId := booking.NewPostTicketBookingToDeadNation(showRepo, deadNationAPI)
-	bookingmadePostTicketBookingToDeadNation := bookingmade.NewPostTicketBookingToDeadNation(mapShowIdToDeadNationEventId)
+	postTicketBookingToDeadNation := booking.NewPostTicketBookingToDeadNation(showRepo, deadNationAPI)
+	bookingmadePostTicketBookingToDeadNation := bookingmade.NewPostTicketBookingToDeadNation(postTicketBookingToDeadNation)
 	routerRouter := router2.NewRouter(eventBus, appendToTracker, bookingconfirmedAppendToTracker, bookingconfirmedIssueReceipt, createTicket, deleteTicket, printTicket, bookingmadePostTicketBookingToDeadNation)
 	service := Service{
 		db:           dbDB,

@@ -19,6 +19,7 @@ func New(
 	e.Use(
 		middleware.CorrelationID,
 		middleware.IdempotencyKey,
+		middleware.ErrorHandler,
 	)
 
 	e.GET("/health", healthHandler.Handle)

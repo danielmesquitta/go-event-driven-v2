@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"tickets/internal/app/pubsub/event"
 	"tickets/internal/domain/entity"
+	"tickets/internal/domain/errs"
 	"tickets/internal/pkg/tx"
 	"tickets/internal/pkg/validator"
 	"tickets/internal/provider/db"
@@ -16,6 +17,7 @@ import (
 
 type Create struct {
 	tx          tx.Transaction
+	showRepo    repo.ShowRepo
 	bookingRepo repo.BookingRepo
 	db          *db.DB
 	outbox      outbox.Outbox
@@ -23,12 +25,14 @@ type Create struct {
 
 func NewCreate(
 	tx tx.Transaction,
+	showRepo repo.ShowRepo,
 	bookingRepo repo.BookingRepo,
 	database *db.DB,
 	outbox outbox.Outbox,
 ) *Create {
 	return &Create{
 		tx:          tx,
+		showRepo:    showRepo,
 		bookingRepo: bookingRepo,
 		db:          database,
 		outbox:      outbox,
@@ -44,11 +48,24 @@ type CreateInput struct {
 func (uc *Create) Execute(ctx context.Context, in CreateInput) (id string, err error) {
 	err = validator.Validate(ctx, in)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to validate input: %w", err)
+	}
+
+	availableTickets, err := uc.showRepo.AvailableTickets(ctx, in.ShowID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get available tickets: %w", err)
+	}
+	if availableTickets < in.NumberOfTickets {
+		return "", errs.ErrBadRequest.New(
+			errs.WithMessage("not enough available tickets"),
+			errs.WithMetadata(errs.MetadataDataKey, map[string]int{
+				"available_tickets": availableTickets,
+				"requested_tickets": in.NumberOfTickets,
+			}),
+		)
 	}
 
 	id = uuid.NewString()
-
 	err = uc.tx.Do(ctx, func(ctx context.Context) error {
 		err = uc.bookingRepo.Create(ctx, &entity.Booking{
 			ID:              id,

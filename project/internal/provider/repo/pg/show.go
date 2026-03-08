@@ -45,3 +45,18 @@ func (r *ShowRepo) Get(ctx context.Context, id string) (*entity.Show, error) {
 	}
 	return &show, nil
 }
+
+func (r *ShowRepo) AvailableTickets(ctx context.Context, id string) (int, error) {
+	var availableTickets int
+	err := r.db.WithTx(ctx).GetContext(ctx, &availableTickets, `
+		SELECT shows.number_of_tickets - COALESCE(SUM(bookings.number_of_tickets), 0)
+		FROM shows
+		LEFT JOIN bookings ON shows.id = bookings.show_id
+		WHERE shows.id = $1
+		GROUP BY shows.id
+	`, id)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get available tickets: %w", err)
+	}
+	return availableTickets, nil
+}
