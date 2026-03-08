@@ -12,6 +12,7 @@ import (
 	"tickets/internal/app/pubsub/handler/bookingcanceled"
 	"tickets/internal/app/pubsub/handler/bookingconfirmed"
 	"tickets/internal/app/pubsub/handler/bookingmade"
+	"tickets/internal/app/pubsub/handler/refundticket"
 	router2 "tickets/internal/app/pubsub/router"
 	"tickets/internal/domain/usecase/booking"
 	"tickets/internal/domain/usecase/show"
@@ -43,8 +44,8 @@ func New() Service {
 	ticketRepo := pg.NewTicketRepo(dbDB)
 	list := ticket.NewList(ticketRepo)
 	commandBus := redisstream2.NewCommandBus()
-	refund := ticket.NewRefund(commandBus)
-	ticketHandler := handler.NewTicketHandler(postStatus, list, refund)
+	sendRefundCommand := ticket.NewSendRefundCommand(commandBus)
+	ticketHandler := handler.NewTicketHandler(postStatus, list, sendRefundCommand)
 	healthHandler := handler.NewHealthHandler()
 	sqlxTransaction := tx.NewSqlxTransaction(sqlxDB)
 	bookingRepo := pg.NewBookingRepo(dbDB)
@@ -71,7 +72,9 @@ func New() Service {
 	deadNationAPI := deadnation.New(clients)
 	postTicketBookingToDeadNation := booking.NewPostTicketBookingToDeadNation(showRepo, deadNationAPI)
 	bookingmadePostTicketBookingToDeadNation := bookingmade.NewPostTicketBookingToDeadNation(postTicketBookingToDeadNation)
-	routerRouter := router2.NewRouter(eventBus, appendToTracker, bookingconfirmedAppendToTracker, bookingconfirmedIssueReceipt, createTicket, deleteTicket, printTicket, bookingmadePostTicketBookingToDeadNation)
+	refund := ticket.NewRefund(receiptsvcClient)
+	refundTicket := refundticket.NewRefundTicket(refund)
+	routerRouter := router2.NewRouter(eventBus, commandBus, appendToTracker, bookingconfirmedAppendToTracker, bookingconfirmedIssueReceipt, createTicket, deleteTicket, printTicket, bookingmadePostTicketBookingToDeadNation, refundTicket)
 	service := Service{
 		db:           dbDB,
 		httpRouter:   echo,

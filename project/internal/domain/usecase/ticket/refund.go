@@ -3,17 +3,20 @@ package ticket
 import (
 	"context"
 	"fmt"
-	"tickets/internal/app/pubsub/message/cmd"
 	"tickets/internal/pkg/validator"
-	"tickets/internal/provider/cmdbus"
+	"tickets/internal/provider/receipt"
 )
 
 type Refund struct {
-	cmdBus cmdbus.CommandBus
+	receiptsService receipt.Service
 }
 
-func NewRefund(cmdBus cmdbus.CommandBus) *Refund {
-	return &Refund{cmdBus: cmdBus}
+func NewRefund(
+	receiptsService receipt.Service,
+) *Refund {
+	return &Refund{
+		receiptsService: receiptsService,
+	}
 }
 
 type RefundInput struct {
@@ -26,10 +29,9 @@ func (c *Refund) Execute(ctx context.Context, in RefundInput) error {
 		return fmt.Errorf("error validating ticket refund input: %w", err)
 	}
 
-	command := cmd.NewRefundTicket(ctx, in.TicketID)
-	err = c.cmdBus.Send(ctx, command)
+	err = c.receiptsService.DeleteReceipt(ctx, in.TicketID, "customer requested refund")
 	if err != nil {
-		return fmt.Errorf("error sending ticket refund command: %w", err)
+		return fmt.Errorf("error deleting receipt: %w", err)
 	}
 
 	return nil

@@ -10,6 +10,7 @@ import (
 	"tickets/internal/app/pubsub/handler/bookingcanceled"
 	"tickets/internal/app/pubsub/handler/bookingconfirmed"
 	"tickets/internal/app/pubsub/handler/bookingmade"
+	"tickets/internal/app/pubsub/handler/refundticket"
 	pubSubRouter "tickets/internal/app/pubsub/router"
 	"tickets/internal/domain/usecase/booking"
 	"tickets/internal/domain/usecase/show"
@@ -78,6 +79,7 @@ func New() Service {
 		ticket.NewPrint,
 		ticket.NewPostStatus,
 		ticket.NewList,
+		ticket.NewSendRefundCommand,
 		ticket.NewRefund,
 		show.NewCreate,
 		booking.NewCreate,
@@ -91,6 +93,7 @@ func New() Service {
 		bookingconfirmed.NewCreateTicket,
 		bookingconfirmed.NewPrintTicket,
 		bookingmade.NewPostTicketBookingToDeadNation,
+		refundticket.NewRefundTicket,
 
 		// HTTP handlers
 		pubSubRouter.NewRouter,

@@ -51,4 +51,27 @@ func (c Client) IssueReceipt(ctx context.Context, ticketID string, price entity.
 	}
 }
 
+func (c Client) DeleteReceipt(ctx context.Context, ticketID string, reason string) error {
+	idempotencyKey := ctxval.GetIdempotencyKey(ctx)
+	resp, err := c.clients.Receipts.PutVoidReceiptWithResponse(ctx, receipts.VoidReceiptRequest{
+		IdempotentId: &idempotencyKey,
+		TicketId:     ticketID,
+		Reason:       reason,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to post receipt: %w", err)
+	}
+
+	switch resp.StatusCode() {
+	case http.StatusOK:
+		// receipt already exists
+		return nil
+	case http.StatusCreated:
+		// receipt was created
+		return nil
+	default:
+		return fmt.Errorf("unexpected status code for POST receipts-api/receipts: %d", resp.StatusCode())
+	}
+}
+
 var _ receipt.Service = &Client{}

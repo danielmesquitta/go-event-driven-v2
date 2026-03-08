@@ -7,4 +7,5 @@ import (
 
 type Service interface {
 	IssueReceipt(ctx context.Context, ticketID string, price entity.Money) error
+	DeleteReceipt(ctx context.Context, ticketID string, reason string) error
 }

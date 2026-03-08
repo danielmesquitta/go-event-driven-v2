@@ -9,20 +9,20 @@ import (
 )
 
 type TicketHandler struct {
-	postTicketStatusUseCase *ticket.PostStatus
-	listTicketsUseCase      *ticket.List
-	refundTicketUseCase     *ticket.Refund
+	postTicketStatusUseCase        *ticket.PostStatus
+	listTicketsUseCase             *ticket.List
+	sendTicketRefundCommandUseCase *ticket.SendRefundCommand
 }
 
 func NewTicketHandler(
 	postTicketStatusUseCase *ticket.PostStatus,
 	listTicketsUseCase *ticket.List,
-	refundTicketUseCase *ticket.Refund,
+	sendTicketRefundCommandUseCase *ticket.SendRefundCommand,
 ) *TicketHandler {
 	return &TicketHandler{
-		postTicketStatusUseCase: postTicketStatusUseCase,
-		listTicketsUseCase:      listTicketsUseCase,
-		refundTicketUseCase:     refundTicketUseCase,
+		postTicketStatusUseCase:        postTicketStatusUseCase,
+		listTicketsUseCase:             listTicketsUseCase,
+		sendTicketRefundCommandUseCase: sendTicketRefundCommandUseCase,
 	}
 }
 
@@ -76,7 +76,7 @@ func (h TicketHandler) ListTickets(c echo.Context) error {
 func (h TicketHandler) TicketRefund(c echo.Context) error {
 	ticketID := c.Param("ticket_id")
 
-	err := h.refundTicketUseCase.Execute(c.Request().Context(), ticket.RefundInput{
+	err := h.sendTicketRefundCommandUseCase.Execute(c.Request().Context(), ticket.SendRefundCommandInput{
 		TicketID: ticketID,
 	})
 	if err != nil {

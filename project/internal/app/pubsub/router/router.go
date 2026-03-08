@@ -5,45 +5,54 @@ import (
 	"tickets/internal/app/pubsub/handler/bookingcanceled"
 	"tickets/internal/app/pubsub/handler/bookingconfirmed"
 	"tickets/internal/app/pubsub/handler/bookingmade"
+	"tickets/internal/app/pubsub/handler/refundticket"
 	pubSubMiddleware "tickets/internal/app/pubsub/middleware"
 	"tickets/internal/pkg/log"
+	"tickets/internal/provider/cmdbus"
 	"tickets/internal/provider/eventbus"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 )
 
 type Router struct {
 	eventBus                               eventbus.EventBus
+	cmdBus                                 cmdbus.CommandBus
 	appendCanceledBookingToTrackerHandler  *bookingcanceled.AppendToTracker
 	appendConfirmedBookingToTrackerHandler *bookingconfirmed.AppendToTracker
 	issueReceiptHandler                    *bookingconfirmed.IssueReceipt
 	createTicketHandler                    *bookingconfirmed.CreateTicket
 	deleteTicketHandler                    *bookingcanceled.DeleteTicket
 	printTicketHandler                     *bookingconfirmed.PrintTicket
-	mapShowIdToDeadNationEventIdHandler    *bookingmade.PostTicketBookingToDeadNation
+	postTicketBookingToDeadNationHandler   *bookingmade.PostTicketBookingToDeadNation
+	refundTicketHandler                    *refundticket.RefundTicket
 }
 
 func NewRouter(
 	eventBus eventbus.EventBus,
+	cmdBus cmdbus.CommandBus,
 	appendCanceledBookingToTrackerHandler *bookingcanceled.AppendToTracker,
 	appendConfirmedBookingToTrackerHandler *bookingconfirmed.AppendToTracker,
 	issueReceiptHandler *bookingconfirmed.IssueReceipt,
 	createTicketHandler *bookingconfirmed.CreateTicket,
 	deleteTicketHandler *bookingcanceled.DeleteTicket,
 	printTicketHandler *bookingconfirmed.PrintTicket,
-	mapShowIdToDeadNationEventIdHandler *bookingmade.PostTicketBookingToDeadNation,
+	postTicketBookingToDeadNationHandler *bookingmade.PostTicketBookingToDeadNation,
+	refundTicketHandler *refundticket.RefundTicket,
 ) *Router {
 	return &Router{
 		eventBus:                               eventBus,
+		cmdBus:                                 cmdBus,
 		appendCanceledBookingToTrackerHandler:  appendCanceledBookingToTrackerHandler,
 		appendConfirmedBookingToTrackerHandler: appendConfirmedBookingToTrackerHandler,
 		issueReceiptHandler:                    issueReceiptHandler,
 		createTicketHandler:                    createTicketHandler,
 		deleteTicketHandler:                    deleteTicketHandler,
 		printTicketHandler:                     printTicketHandler,
-		mapShowIdToDeadNationEventIdHandler:    mapShowIdToDeadNationEventIdHandler,
+		postTicketBookingToDeadNationHandler:   postTicketBookingToDeadNationHandler,
+		refundTicketHandler:                    refundTicketHandler,
 	}
 }
 
@@ -58,24 +67,27 @@ func (r *Router) Run(
 		Logger:          watermill.NewSlogLogger(log.New(ctx)),
 	}
 
-	r.eventBus.AddMiddleware(
+	middlewares := []message.HandlerMiddleware{
 		retry.Middleware,
 		pubSubMiddleware.Logger,
 		pubSubMiddleware.ErrorHandler,
 		middleware.CorrelationID,
 		pubSubMiddleware.CorrelationID,
 		pubSubMiddleware.IdempotencyKey,
-	)
+	}
+
+	r.eventBus.AddMiddleware(middlewares...)
+	r.cmdBus.AddMiddleware(middlewares...)
 
 	// event.TicketBookingCanceled
-	registerHandlers(
+	registerEventHandlers(
 		r.eventBus,
 		r.deleteTicketHandler.Handle,
 		r.appendCanceledBookingToTrackerHandler.Handle,
 	)
 
 	// event.TicketBookingConfirmed
-	registerHandlers(r.eventBus,
+	registerEventHandlers(r.eventBus,
 		r.appendConfirmedBookingToTrackerHandler.Handle,
 		r.createTicketHandler.Handle,
 		r.printTicketHandler.Handle,
@@ -83,23 +95,57 @@ func (r *Router) Run(
 	)
 
 	// event.BookingMade
-	registerHandlers(
+	registerEventHandlers(
 		r.eventBus,
-		r.mapShowIdToDeadNationEventIdHandler.Handle,
+		r.postTicketBookingToDeadNationHandler.Handle,
 	)
 
-	return r.eventBus.Run(ctx)
+	// cmd.RefundTicket
+	registerCommandHandlers(r.cmdBus,
+		r.refundTicketHandler.Handle,
+	)
+
+	go func() {
+		err := r.eventBus.Run(ctx)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	go func() {
+		err := r.cmdBus.Run(ctx)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	return nil
 }
 
 func (r *Router) Running() chan struct{} {
-	return r.eventBus.Running()
+	ch := make(chan struct{})
+	go func() {
+		<-r.eventBus.Running()
+		<-r.cmdBus.Running()
+		close(ch)
+	}()
+	return ch
 }
 
-func registerHandlers[T any](
+func registerEventHandlers[T any](
 	eventBus eventbus.EventBus,
 	handlerFuncs ...eventbus.HandlerFunc[T],
 ) {
 	for _, handlerFunc := range handlerFuncs {
 		eventbus.AddHandler(eventBus, handlerFunc)
+	}
+}
+
+func registerCommandHandlers[T any](
+	cmdBus cmdbus.CommandBus,
+	handlerFuncs ...cmdbus.HandlerFunc[T],
+) {
+	for _, handlerFunc := range handlerFuncs {
+		cmdbus.AddHandler(cmdBus, handlerFunc)
 	}
 }
