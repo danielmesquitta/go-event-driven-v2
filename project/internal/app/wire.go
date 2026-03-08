@@ -27,6 +27,8 @@ import (
 	"tickets/internal/provider/gateway"
 	"tickets/internal/provider/outbox"
 	pgOutbox "tickets/internal/provider/outbox/pg"
+	"tickets/internal/provider/payment"
+	"tickets/internal/provider/payment/paymentsvc"
 	"tickets/internal/provider/receipt"
 	"tickets/internal/provider/receipt/receiptsvc"
 	"tickets/internal/provider/repo"
@@ -69,6 +71,8 @@ func New() Service {
 		wire.Bind(new(showapi.ShowAPI), new(*deadnation.DeadNationAPI)),
 		cmdBusRedisStream.NewCommandBus,
 		wire.Bind(new(cmdbus.CommandBus), new(*cmdBusRedisStream.CommandBus)),
+		paymentsvc.NewClient,
+		wire.Bind(new(payment.Service), new(*paymentsvc.Client)),
 
 		// Usecases
 		tracker.NewAppendCanceledBooking,

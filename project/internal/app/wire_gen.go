@@ -25,6 +25,7 @@ import (
 	"tickets/internal/provider/filestorage/filestorageapi"
 	"tickets/internal/provider/gateway"
 	pg2 "tickets/internal/provider/outbox/pg"
+	"tickets/internal/provider/payment/paymentsvc"
 	"tickets/internal/provider/receipt/receiptsvc"
 	"tickets/internal/provider/repo/pg"
 	"tickets/internal/provider/showapi/deadnation"
@@ -72,7 +73,8 @@ func New() Service {
 	deadNationAPI := deadnation.New(clients)
 	postTicketBookingToDeadNation := booking.NewPostTicketBookingToDeadNation(showRepo, deadNationAPI)
 	bookingmadePostTicketBookingToDeadNation := bookingmade.NewPostTicketBookingToDeadNation(postTicketBookingToDeadNation)
-	refund := ticket.NewRefund(receiptsvcClient)
+	paymentsvcClient := paymentsvc.NewClient(clients)
+	refund := ticket.NewRefund(receiptsvcClient, paymentsvcClient)
 	refundTicket := refundticket.NewRefundTicket(refund)
 	routerRouter := router2.NewRouter(eventBus, commandBus, appendToTracker, bookingconfirmedAppendToTracker, bookingconfirmedIssueReceipt, createTicket, deleteTicket, printTicket, bookingmadePostTicketBookingToDeadNation, refundTicket)
 	service := Service{
