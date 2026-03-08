@@ -54,6 +54,7 @@ type InvoiceReadModelStorage struct {
 func NewInvoiceReadModelStorage() *InvoiceReadModelStorage {
 	return &InvoiceReadModelStorage{
 		invoices: make(map[string]InvoiceReadModel),
+		payments: make(map[string]struct{}),
 	}
 }
 
@@ -96,6 +97,7 @@ func (s *InvoiceReadModelStorage) OnInvoicePaymentReceived(ctx context.Context, 
 	s.payments[event.PaymentID] = struct{}{}
 	invoice.PaidAmount = invoice.PaidAmount.Add(event.PaidAmount)
 	invoice.LastPaymentAt = event.PaidAt
+	invoice.FullyPaid = invoice.PaidAmount.GreaterThanOrEqual(invoice.Amount)
 	s.invoices[event.InvoiceID] = invoice
 	return nil
 }
