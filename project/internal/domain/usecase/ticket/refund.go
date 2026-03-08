@@ -3,7 +3,9 @@ package ticket
 import (
 	"context"
 	"fmt"
+	"tickets/internal/app/pubsub/message/event"
 	"tickets/internal/pkg/validator"
+	"tickets/internal/provider/eventbus"
 	"tickets/internal/provider/payment"
 	"tickets/internal/provider/receipt"
 
@@ -15,15 +17,18 @@ const reason = "customer requested refund"
 type Refund struct {
 	receiptsService receipt.Service
 	paymentsService payment.Service
+	eventBus        eventbus.EventBus
 }
 
 func NewRefund(
 	receiptsService receipt.Service,
 	paymentsService payment.Service,
+	eventBus eventbus.EventBus,
 ) *Refund {
 	return &Refund{
 		receiptsService: receiptsService,
 		paymentsService: paymentsService,
+		eventBus:        eventBus,
 	}
 }
 
@@ -49,6 +54,11 @@ func (c *Refund) Execute(ctx context.Context, in RefundInput) error {
 
 	if err := g.Wait(); err != nil {
 		return fmt.Errorf("error refunding ticket: %w", err)
+	}
+
+	e := event.NewTicketRefunded(ctx, in.TicketID)
+	if err := c.eventBus.Publish(ctx, e); err != nil {
+		return fmt.Errorf("failed to publish TicketRefunded event: %w", err)
 	}
 
 	return nil

@@ -74,7 +74,7 @@ func New() Service {
 	postTicketBookingToDeadNation := booking.NewPostTicketBookingToDeadNation(showRepo, deadNationAPI)
 	bookingmadePostTicketBookingToDeadNation := bookingmade.NewPostTicketBookingToDeadNation(postTicketBookingToDeadNation)
 	paymentsvcClient := paymentsvc.NewClient(clients)
-	refund := ticket.NewRefund(receiptsvcClient, paymentsvcClient)
+	refund := ticket.NewRefund(receiptsvcClient, paymentsvcClient, eventBus)
 	refundTicket := refundticket.NewRefundTicket(refund)
 	routerRouter := router2.NewRouter(eventBus, commandBus, appendToTracker, bookingconfirmedAppendToTracker, bookingconfirmedIssueReceipt, createTicket, deleteTicket, printTicket, bookingmadePostTicketBookingToDeadNation, refundTicket)
 	service := Service{
