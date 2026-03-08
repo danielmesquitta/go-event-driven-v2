@@ -61,7 +61,7 @@ func New() Service {
 	appendConfirmedBooking := tracker.NewAppendConfirmedBooking(client)
 	bookingconfirmedAppendToTracker := bookingconfirmed.NewAppendToTracker(appendConfirmedBooking)
 	receiptsvcClient := receiptsvc.NewClient(clients)
-	issueReceipt := ticket.NewIssueReceipt(receiptsvcClient)
+	issueReceipt := ticket.NewIssueReceipt(receiptsvcClient, eventBus)
 	bookingconfirmedIssueReceipt := bookingconfirmed.NewIssueReceipt(issueReceipt)
 	ticketCreate := ticket.NewCreate(ticketRepo)
 	createTicket := bookingconfirmed.NewCreateTicket(ticketCreate)

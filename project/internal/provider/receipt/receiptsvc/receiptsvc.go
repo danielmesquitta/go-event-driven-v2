@@ -2,11 +2,12 @@ package receiptsvc
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"net/http"
 	"tickets/internal/domain/entity"
 	"tickets/internal/pkg/ctxval"
 	"tickets/internal/provider/receipt"
+	"time"
 
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients"
 	"github.com/ThreeDotsLabs/go-event-driven/v2/common/clients/receipts"
@@ -25,7 +26,12 @@ func NewClient(clients *clients.Clients) *Client {
 	return &Client{clients: clients}
 }
 
-func (c Client) IssueReceipt(ctx context.Context, ticketID string, price entity.Money) error {
+type IssueReceiptResponse struct {
+	Number   string    `json:"number"`
+	IssuedAt time.Time `json:"issued_at"`
+}
+
+func (c Client) IssueReceipt(ctx context.Context, ticketID string, price entity.Money) (*receipt.Receipt, error) {
 	idempotencyKey := ctxval.GetIdempotencyKey(ctx)
 	resp, err := c.clients.Receipts.PutReceiptsWithResponse(ctx, receipts.CreateReceipt{
 		IdempotencyKey: &idempotencyKey,
@@ -36,19 +42,24 @@ func (c Client) IssueReceipt(ctx context.Context, ticketID string, price entity.
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to post receipt: %w", err)
+		return nil, fmt.Errorf("failed to post receipt: %w", err)
+	}
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return nil, fmt.Errorf("unexpected status code for IssueReceipt: %d", resp.StatusCode())
 	}
 
-	switch resp.StatusCode() {
-	case http.StatusOK:
-		// receipt already exists
-		return nil
-	case http.StatusCreated:
-		// receipt was created
-		return nil
-	default:
-		return fmt.Errorf("unexpected status code for POST receipts-api/receipts: %d", resp.StatusCode())
+	var issueReceiptResponse IssueReceiptResponse
+	err = json.Unmarshal(resp.Body, &issueReceiptResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal IssueReceiptResponse: %w", err)
 	}
+
+	receipt := receipt.Receipt{
+		ReceiptNumber: issueReceiptResponse.Number,
+		IssuedAt:      issueReceiptResponse.IssuedAt,
+	}
+
+	return &receipt, nil
 }
 
 func (c Client) DeleteReceipt(ctx context.Context, ticketID string, reason string) error {
@@ -62,16 +73,11 @@ func (c Client) DeleteReceipt(ctx context.Context, ticketID string, reason strin
 		return fmt.Errorf("failed to post receipt: %w", err)
 	}
 
-	switch resp.StatusCode() {
-	case http.StatusOK:
-		// receipt already exists
-		return nil
-	case http.StatusCreated:
-		// receipt was created
-		return nil
-	default:
-		return fmt.Errorf("unexpected status code for POST receipts-api/receipts: %d", resp.StatusCode())
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return fmt.Errorf("unexpected status code for DeleteReceipt: %d", resp.StatusCode())
 	}
+
+	return nil
 }
 
 var _ receipt.Service = &Client{}
