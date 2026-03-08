@@ -11,15 +11,18 @@ import (
 type TicketHandler struct {
 	postTicketStatusUseCase *ticket.PostStatus
 	listTicketsUseCase      *ticket.List
+	refundTicketUseCase     *ticket.Refund
 }
 
 func NewTicketHandler(
 	postTicketStatusUseCase *ticket.PostStatus,
 	listTicketsUseCase *ticket.List,
+	refundTicketUseCase *ticket.Refund,
 ) *TicketHandler {
 	return &TicketHandler{
 		postTicketStatusUseCase: postTicketStatusUseCase,
 		listTicketsUseCase:      listTicketsUseCase,
+		refundTicketUseCase:     refundTicketUseCase,
 	}
 }
 
@@ -68,4 +71,17 @@ func (h TicketHandler) ListTickets(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, tickets)
+}
+
+func (h TicketHandler) TicketRefund(c echo.Context) error {
+	ticketID := c.Param("ticket_id")
+
+	err := h.refundTicketUseCase.Execute(c.Request().Context(), ticket.RefundInput{
+		TicketID: ticketID,
+	})
+	if err != nil {
+		return err
+	}
+
+	return c.NoContent(http.StatusAccepted)
 }

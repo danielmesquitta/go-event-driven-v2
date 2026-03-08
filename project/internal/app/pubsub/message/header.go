@@ -1,4 +1,4 @@
-package event
+package message
 
 import (
 	"context"
@@ -8,14 +8,14 @@ import (
 	"github.com/google/uuid"
 )
 
-type EventHeader struct {
+type Header struct {
 	ID             string    `json:"id"`
 	PublishedAt    time.Time `json:"published_at"`
 	IdempotencyKey string    `json:"idempotency_key"`
 }
 
-func NewEventHeader(ctx context.Context) EventHeader {
-	return EventHeader{
+func NewHeader(ctx context.Context) Header {
+	return Header{
 		ID:             uuid.NewString(),
 		PublishedAt:    time.Now(),
 		IdempotencyKey: ctxval.GetIdempotencyKey(ctx),

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"tickets/internal/app/pubsub/event"
+	"tickets/internal/app/pubsub/message/event"
 	"tickets/internal/pkg/ctxval"
 
 	"github.com/ThreeDotsLabs/watermill/message"

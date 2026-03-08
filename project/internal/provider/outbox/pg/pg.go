@@ -3,7 +3,8 @@ package pg
 import (
 	"context"
 	"errors"
-	"tickets/internal/app/pubsub/event"
+	"tickets/internal/app/pubsub/message/event"
+	"tickets/internal/pkg/bus"
 	"tickets/internal/pkg/tx"
 	"tickets/internal/provider/db"
 	"tickets/internal/provider/eventbus"
@@ -72,13 +73,13 @@ func (p *Outbox) Publish(ctx context.Context, ev event.Event) error {
 		return err
 	}
 
-	pub = eventbus.CorrelationPublisherDecorator{Publisher: pub}
+	pub = bus.CorrelationPublisherDecorator{Publisher: pub}
 
 	pub = forwarder.NewPublisher(pub, forwarder.PublisherConfig{
 		ForwarderTopic: ForwarderTopic,
 	})
 
-	pub = eventbus.CorrelationPublisherDecorator{Publisher: pub}
+	pub = bus.CorrelationPublisherDecorator{Publisher: pub}
 
 	bus, err := cqrs.NewEventBusWithConfig(pub, cqrs.EventBusConfig{
 		GeneratePublishTopic: func(params cqrs.GenerateEventPublishTopicParams) (string, error) {

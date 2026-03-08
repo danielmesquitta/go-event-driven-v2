@@ -2,7 +2,7 @@ package bookingcanceled
 
 import (
 	"context"
-	"tickets/internal/app/pubsub/event"
+	"tickets/internal/app/pubsub/message/event"
 	"tickets/internal/domain/usecase/tracker"
 )
 

@@ -1,17 +1,17 @@
-package eventbus
+package cmdbus
 
 import (
 	"context"
-	"tickets/internal/app/pubsub/message/event"
+	"tickets/internal/app/pubsub/message/cmd"
 
 	"github.com/ThreeDotsLabs/watermill/components/cqrs"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
 )
 
-type EventBus interface {
-	Publish(ctx context.Context, event event.Event) error
-	AddHandler(handler EventHandler) error
+type CommandBus interface {
+	Send(ctx context.Context, cmd cmd.Command) error
+	AddHandler(handler CommandHandler) error
 	AddMiddleware(m ...message.HandlerMiddleware)
 
 	Run(ctx context.Context) error
@@ -23,17 +23,17 @@ type EventBus interface {
 	Publisher() message.Publisher
 }
 
-type HandlerFunc[T any] func(ctx context.Context, event *T) error
+type HandlerFunc[T any] func(ctx context.Context, cmd *T) error
 
-type EventHandler interface {
+type CommandHandler interface {
 	HandlerName() string
-	NewEvent() any
-	Handle(ctx context.Context, event any) error
+	NewCommand() any
+	Handle(ctx context.Context, cmd any) error
 }
 
-func AddHandler[T any](eb EventBus, handlerFunc HandlerFunc[T]) {
+func AddHandler[T any](eb CommandBus, handlerFunc HandlerFunc[T]) {
 	handlerName := uuid.NewString()
-	handler := cqrs.NewEventHandler(handlerName, handlerFunc)
+	handler := cqrs.NewCommandHandler(handlerName, handlerFunc)
 	err := eb.AddHandler(handler)
 	if err != nil {
 		panic(err)

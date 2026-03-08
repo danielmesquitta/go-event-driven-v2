@@ -2,7 +2,7 @@ package outbox
 
 import (
 	"context"
-	"tickets/internal/app/pubsub/event"
+	"tickets/internal/app/pubsub/message/event"
 )
 
 type Outbox interface {

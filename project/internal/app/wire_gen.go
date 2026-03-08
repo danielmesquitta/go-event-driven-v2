@@ -18,6 +18,7 @@ import (
 	"tickets/internal/domain/usecase/ticket"
 	"tickets/internal/domain/usecase/tracker"
 	"tickets/internal/pkg/tx"
+	redisstream2 "tickets/internal/provider/cmdbus/redisstream"
 	"tickets/internal/provider/db"
 	"tickets/internal/provider/eventbus/redisstream"
 	"tickets/internal/provider/filestorage/filestorageapi"
@@ -41,7 +42,9 @@ func New() Service {
 	postStatus := ticket.NewPostStatus(eventBus)
 	ticketRepo := pg.NewTicketRepo(dbDB)
 	list := ticket.NewList(ticketRepo)
-	ticketHandler := handler.NewTicketHandler(postStatus, list)
+	commandBus := redisstream2.NewCommandBus()
+	refund := ticket.NewRefund(commandBus)
+	ticketHandler := handler.NewTicketHandler(postStatus, list, refund)
 	healthHandler := handler.NewHealthHandler()
 	sqlxTransaction := tx.NewSqlxTransaction(sqlxDB)
 	bookingRepo := pg.NewBookingRepo(dbDB)

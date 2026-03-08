@@ -28,6 +28,7 @@ func New(
 
 	e.POST("/tickets-status", ticketHandler.PostTicketsStatus)
 	e.GET("/tickets", ticketHandler.ListTickets)
+	e.PUT("/ticket-refund/:ticket_id", ticketHandler.TicketRefund)
 
 	e.POST("/book-tickets", bookingHandler.CreateBooking)
 

@@ -16,6 +16,8 @@ import (
 	"tickets/internal/domain/usecase/ticket"
 	"tickets/internal/domain/usecase/tracker"
 	"tickets/internal/pkg/tx"
+	"tickets/internal/provider/cmdbus"
+	cmdBusRedisStream "tickets/internal/provider/cmdbus/redisstream"
 	"tickets/internal/provider/db"
 	"tickets/internal/provider/eventbus"
 	"tickets/internal/provider/eventbus/redisstream"
@@ -64,6 +66,8 @@ func New() Service {
 		wire.Bind(new(outbox.Outbox), new(*pgOutbox.Outbox)),
 		deadnation.New,
 		wire.Bind(new(showapi.ShowAPI), new(*deadnation.DeadNationAPI)),
+		cmdBusRedisStream.NewCommandBus,
+		wire.Bind(new(cmdbus.CommandBus), new(*cmdBusRedisStream.CommandBus)),
 
 		// Usecases
 		tracker.NewAppendCanceledBooking,
@@ -74,6 +78,7 @@ func New() Service {
 		ticket.NewPrint,
 		ticket.NewPostStatus,
 		ticket.NewList,
+		ticket.NewRefund,
 		show.NewCreate,
 		booking.NewCreate,
 		booking.NewPostTicketBookingToDeadNation,

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"tickets/internal/pkg/bus"
-	"tickets/internal/provider/eventbus"
+	"tickets/internal/provider/cmdbus"
 
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-redisstream/pkg/redisstream"
@@ -19,14 +19,14 @@ var marshaler = cqrs.JSONMarshaler{
 	GenerateName: cqrs.StructName,
 }
 
-type EventBus struct {
-	processor *cqrs.EventProcessor
-	bus       *cqrs.EventBus
+type CommandBus struct {
+	processor *cqrs.CommandProcessor
+	bus       *cqrs.CommandBus
 	router    *message.Router
 	pub       message.Publisher
 }
 
-func NewEventBus() *EventBus {
+func NewCommandBus() *CommandBus {
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
 		redisAddr = "localhost:6379"
@@ -50,9 +50,9 @@ func NewEventBus() *EventBus {
 
 	pub = bus.CorrelationPublisherDecorator{Publisher: pub}
 
-	bus, err := cqrs.NewEventBusWithConfig(
+	bus, err := cqrs.NewCommandBusWithConfig(
 		pub,
-		cqrs.EventBusConfig{
+		cqrs.CommandBusConfig{
 			GeneratePublishTopic: generatePublishTopic,
 			Marshaler:            marshaler,
 		},
@@ -63,9 +63,9 @@ func NewEventBus() *EventBus {
 
 	router := message.NewDefaultRouter(nil)
 
-	processor, err := cqrs.NewEventProcessorWithConfig(
+	processor, err := cqrs.NewCommandProcessorWithConfig(
 		router,
-		cqrs.EventProcessorConfig{
+		cqrs.CommandProcessorConfig{
 			SubscriberConstructor:  newSubscriberConstructor(rdb, nil),
 			Marshaler:              marshaler,
 			GenerateSubscribeTopic: generateSubscribeTopic,
@@ -75,7 +75,7 @@ func NewEventBus() *EventBus {
 		panic(err)
 	}
 
-	return &EventBus{
+	return &CommandBus{
 		bus:       bus,
 		processor: processor,
 		router:    router,
@@ -86,8 +86,8 @@ func NewEventBus() *EventBus {
 func newSubscriberConstructor(
 	rdb *redis.Client,
 	logger watermill.LoggerAdapter,
-) cqrs.EventProcessorSubscriberConstructorFn {
-	return func(params cqrs.EventProcessorSubscriberConstructorParams) (message.Subscriber, error) {
+) cqrs.CommandProcessorSubscriberConstructorFn {
+	return func(params cqrs.CommandProcessorSubscriberConstructorParams) (message.Subscriber, error) {
 		return redisstream.NewSubscriber(redisstream.SubscriberConfig{
 			Client:        rdb,
 			ConsumerGroup: fmt.Sprintf("%s.%s", consumerGroupPrefix, params.HandlerName),
@@ -95,12 +95,12 @@ func newSubscriberConstructor(
 	}
 }
 
-func generateSubscribeTopic(params cqrs.EventProcessorGenerateSubscribeTopicParams) (string, error) {
-	return params.EventName, nil
+func generateSubscribeTopic(params cqrs.CommandProcessorGenerateSubscribeTopicParams) (string, error) {
+	return params.CommandName, nil
 }
 
-func generatePublishTopic(params cqrs.GenerateEventPublishTopicParams) (string, error) {
-	return params.EventName, nil
+func generatePublishTopic(params cqrs.CommandBusGeneratePublishTopicParams) (string, error) {
+	return params.CommandName, nil
 }
 
-var _ eventbus.EventBus = (*EventBus)(nil)
+var _ cmdbus.CommandBus = (*CommandBus)(nil)

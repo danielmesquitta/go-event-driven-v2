@@ -2,7 +2,7 @@ package redisstream
 
 import (
 	"context"
-	"tickets/internal/app/pubsub/event"
+	"tickets/internal/app/pubsub/message/event"
 )
 
 func (e *EventBus) Publish(ctx context.Context, ev event.Event) error {

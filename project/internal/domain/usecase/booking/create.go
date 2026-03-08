@@ -3,7 +3,7 @@ package booking
 import (
 	"context"
 	"fmt"
-	"tickets/internal/app/pubsub/event"
+	"tickets/internal/app/pubsub/message/event"
 	"tickets/internal/domain/entity"
 	"tickets/internal/domain/errs"
 	"tickets/internal/pkg/tx"

@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
-	"tickets/internal/app/pubsub/event"
+	pubSubMessage "tickets/internal/app/pubsub/message"
 	"tickets/internal/pkg/ctxval"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -11,7 +11,7 @@ import (
 func IdempotencyKey(next message.HandlerFunc) message.HandlerFunc {
 	return func(msg *message.Message) ([]*message.Message, error) {
 		type Event struct {
-			Header event.EventHeader `json:"header"`
+			Header pubSubMessage.Header `json:"header"`
 		}
 
 		e := Event{}
