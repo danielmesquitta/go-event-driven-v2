@@ -90,17 +90,17 @@ func newSubscriberConstructor(
 	return func(params cqrs.EventProcessorSubscriberConstructorParams) (message.Subscriber, error) {
 		return redisstream.NewSubscriber(redisstream.SubscriberConfig{
 			Client:        rdb,
-			ConsumerGroup: fmt.Sprintf("%s.%s", consumerGroupPrefix, params.HandlerName),
+			ConsumerGroup: fmt.Sprintf("%s.events.%s", consumerGroupPrefix, params.HandlerName),
 		}, logger)
 	}
 }
 
 func generateSubscribeTopic(params cqrs.EventProcessorGenerateSubscribeTopicParams) (string, error) {
-	return params.EventName, nil
+	return "events." + params.EventName, nil
 }
 
 func generatePublishTopic(params cqrs.GenerateEventPublishTopicParams) (string, error) {
-	return params.EventName, nil
+	return "events." + params.EventName, nil
 }
 
 var _ eventbus.EventBus = (*EventBus)(nil)

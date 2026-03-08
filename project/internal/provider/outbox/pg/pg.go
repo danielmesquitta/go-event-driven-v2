@@ -83,7 +83,7 @@ func (p *Outbox) Publish(ctx context.Context, ev event.Event) error {
 
 	bus, err := cqrs.NewEventBusWithConfig(pub, cqrs.EventBusConfig{
 		GeneratePublishTopic: func(params cqrs.GenerateEventPublishTopicParams) (string, error) {
-			return params.EventName, nil
+			return "events." + params.EventName, nil
 		},
 		Marshaler: marshaler,
 	})

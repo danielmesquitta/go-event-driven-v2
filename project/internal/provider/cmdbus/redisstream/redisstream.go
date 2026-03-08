@@ -90,17 +90,17 @@ func newSubscriberConstructor(
 	return func(params cqrs.CommandProcessorSubscriberConstructorParams) (message.Subscriber, error) {
 		return redisstream.NewSubscriber(redisstream.SubscriberConfig{
 			Client:        rdb,
-			ConsumerGroup: fmt.Sprintf("%s.%s", consumerGroupPrefix, params.HandlerName),
+			ConsumerGroup: fmt.Sprintf("%s.commands.%s", consumerGroupPrefix, params.HandlerName),
 		}, logger)
 	}
 }
 
 func generateSubscribeTopic(params cqrs.CommandProcessorGenerateSubscribeTopicParams) (string, error) {
-	return params.CommandName, nil
+	return "commands." + params.CommandName, nil
 }
 
 func generatePublishTopic(params cqrs.CommandBusGeneratePublishTopicParams) (string, error) {
-	return params.CommandName, nil
+	return "commands." + params.CommandName, nil
 }
 
 var _ cmdbus.CommandBus = (*CommandBus)(nil)
