@@ -11,6 +11,7 @@ type TicketBookingConfirmed struct {
 	TicketID      string         `json:"ticket_id"`
 	CustomerEmail string         `json:"customer_email"`
 	Price         entity.Money   `json:"price"`
+	BookingID     string         `json:"booking_id"`
 }
 
 func NewTicketBookingConfirmed(
@@ -18,12 +19,14 @@ func NewTicketBookingConfirmed(
 	ticketID string,
 	customerEmail string,
 	price entity.Money,
+	bookingID string,
 ) *TicketBookingConfirmed {
 	return &TicketBookingConfirmed{
 		Header:        message.NewHeader(ctx),
 		TicketID:      ticketID,
 		CustomerEmail: customerEmail,
 		Price:         price,
+		BookingID:     bookingID,
 	}
 }
 

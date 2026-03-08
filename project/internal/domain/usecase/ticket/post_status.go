@@ -64,6 +64,7 @@ func (p *PostStatus) postTicketStatus(ctx context.Context, in postTicketStatusIn
 			in.Ticket.ID,
 			in.Ticket.CustomerEmail,
 			in.Ticket.Price,
+			in.Ticket.BookingID,
 		)
 
 	case entity.TicketStatusCanceled:

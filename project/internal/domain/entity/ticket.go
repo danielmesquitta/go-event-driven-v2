@@ -12,4 +12,5 @@ type Ticket struct {
 	Status        TicketStatus `json:"status" validate:"oneof=confirmed canceled"`
 	Price         Money        `json:"price"`
 	CustomerEmail string       `json:"customer_email"`
+	BookingID     string       `json:"booking_id"`
 }
