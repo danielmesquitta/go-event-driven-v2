@@ -17,6 +17,7 @@ func NewUpdateOpsBooking(useCase *opsbooking.OnTicketRefunded) *UpdateOpsBooking
 
 func (h *UpdateOpsBooking) Handle(ctx context.Context, e *event.TicketRefunded) error {
 	return h.useCase.Execute(ctx, opsbooking.OnTicketRefundedInput{
-		TicketID: e.TicketID,
+		TicketID:   e.TicketID,
+		RefundedAt: e.Header.PublishedAt,
 	})
 }

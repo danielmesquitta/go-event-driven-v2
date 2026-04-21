@@ -21,5 +21,6 @@ func (h *UpdateOpsBooking) Handle(ctx context.Context, e *event.TicketBookingCon
 		TicketID:      e.TicketID,
 		CustomerEmail: e.CustomerEmail,
 		Price:         e.Price,
+		ConfirmedAt:   e.Header.PublishedAt,
 	})
 }

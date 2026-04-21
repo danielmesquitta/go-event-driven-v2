@@ -3,6 +3,7 @@ package opsbooking
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"tickets/internal/domain/entity"
 	"tickets/internal/pkg/validator"
@@ -18,7 +19,8 @@ func NewOnTicketRefunded(opsBookingRepo repo.OpsBookingRepo) *OnTicketRefunded {
 }
 
 type OnTicketRefundedInput struct {
-	TicketID string `json:"ticket_id" validate:"required"`
+	TicketID   string    `json:"ticket_id" validate:"required"`
+	RefundedAt time.Time `json:"refunded_at" validate:"required"`
 }
 
 func (uc *OnTicketRefunded) Execute(ctx context.Context, in OnTicketRefundedInput) error {
@@ -35,7 +37,7 @@ func (uc *OnTicketRefunded) Execute(ctx context.Context, in OnTicketRefundedInpu
 				return op, fmt.Errorf("ticket %s not found in ops booking", in.TicketID)
 			}
 
-			ticket.Status = "refunded"
+			ticket.RefundedAt = in.RefundedAt
 			op.Tickets[in.TicketID] = ticket
 
 			return op, nil

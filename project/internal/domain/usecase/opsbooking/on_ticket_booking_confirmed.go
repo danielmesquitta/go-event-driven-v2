@@ -3,6 +3,7 @@ package opsbooking
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"tickets/internal/domain/entity"
 	"tickets/internal/pkg/log"
@@ -23,6 +24,7 @@ type OnTicketBookingConfirmedInput struct {
 	TicketID      string       `json:"ticket_id" validate:"required"`
 	CustomerEmail string       `json:"customer_email" validate:"required"`
 	Price         entity.Money `json:"price" validate:"required"`
+	ConfirmedAt   time.Time    `json:"confirmed_at" validate:"required"`
 }
 
 func (uc *OnTicketBookingConfirmed) Execute(ctx context.Context, in OnTicketBookingConfirmedInput) error {
@@ -42,7 +44,7 @@ func (uc *OnTicketBookingConfirmed) Execute(ctx context.Context, in OnTicketBook
 			ticket.PriceAmount = in.Price.Amount
 			ticket.PriceCurrency = in.Price.Currency
 			ticket.CustomerEmail = in.CustomerEmail
-			ticket.Status = "confirmed"
+			ticket.ConfirmedAt = in.ConfirmedAt
 			op.Tickets[in.TicketID] = ticket
 
 			return op, nil
