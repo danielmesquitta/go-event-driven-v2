@@ -8,7 +8,6 @@ import (
 	"tickets/internal/domain/errs"
 	"tickets/internal/pkg/tx"
 	"tickets/internal/pkg/validator"
-	"tickets/internal/provider/db"
 	"tickets/internal/provider/outbox"
 	"tickets/internal/provider/repo"
 
@@ -19,7 +18,6 @@ type Create struct {
 	tx          tx.Transaction
 	showRepo    repo.ShowRepo
 	bookingRepo repo.BookingRepo
-	db          *db.DB
 	outbox      outbox.Outbox
 }
 
@@ -27,14 +25,12 @@ func NewCreate(
 	tx tx.Transaction,
 	showRepo repo.ShowRepo,
 	bookingRepo repo.BookingRepo,
-	database *db.DB,
 	outbox outbox.Outbox,
 ) *Create {
 	return &Create{
 		tx:          tx,
 		showRepo:    showRepo,
 		bookingRepo: bookingRepo,
-		db:          database,
 		outbox:      outbox,
 	}
 }

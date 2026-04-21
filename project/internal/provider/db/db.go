@@ -66,6 +66,11 @@ func (d *DB) InitializeSchema(ctx context.Context) error {
 				customer_email VARCHAR(255) NOT NULL,
 				FOREIGN KEY (show_id) REFERENCES shows(id)
 		);
+
+		CREATE TABLE IF NOT EXISTS read_model_ops_bookings (
+				booking_id UUID PRIMARY KEY,
+				payload JSONB NOT NULL
+		);
 	`)
 	if err != nil {
 		return fmt.Errorf("failed to initialize schema: %w", err)

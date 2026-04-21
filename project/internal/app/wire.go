@@ -11,8 +11,12 @@ import (
 	"tickets/internal/app/pubsub/handler/bookingconfirmed"
 	"tickets/internal/app/pubsub/handler/bookingmade"
 	"tickets/internal/app/pubsub/handler/refundticket"
+	"tickets/internal/app/pubsub/handler/ticketprinted"
+	"tickets/internal/app/pubsub/handler/ticketreceiptissued"
+	"tickets/internal/app/pubsub/handler/ticketrefunded"
 	pubSubRouter "tickets/internal/app/pubsub/router"
 	"tickets/internal/domain/usecase/booking"
+	"tickets/internal/domain/usecase/opsbooking"
 	"tickets/internal/domain/usecase/show"
 	"tickets/internal/domain/usecase/ticket"
 	"tickets/internal/domain/usecase/tracker"
@@ -48,6 +52,8 @@ func New() Service {
 		wire.Bind(new(repo.ShowRepo), new(*pgRepo.ShowRepo)),
 		pgRepo.NewBookingRepo,
 		wire.Bind(new(repo.BookingRepo), new(*pgRepo.BookingRepo)),
+		pgRepo.NewOpsBooking,
+		wire.Bind(new(repo.OpsBookingRepo), new(*pgRepo.OpsBooking)),
 
 		// Packages
 		tx.NewSqlxTransaction,
@@ -88,6 +94,7 @@ func New() Service {
 		show.NewCreate,
 		booking.NewCreate,
 		booking.NewPostTicketBookingToDeadNation,
+		opsbooking.NewCreate,
 
 		// PubSub handlers
 		bookingcanceled.NewAppendToTracker,
@@ -96,8 +103,13 @@ func New() Service {
 		bookingconfirmed.NewIssueReceipt,
 		bookingconfirmed.NewCreateTicket,
 		bookingconfirmed.NewPrintTicket,
+		bookingconfirmed.NewUpdateOpsBooking,
 		bookingmade.NewPostTicketBookingToDeadNation,
+		bookingmade.NewCreateOpsBooking,
 		refundticket.NewRefundTicket,
+		ticketprinted.NewUpdateOpsBooking,
+		ticketreceiptissued.NewUpdateOpsBooking,
+		ticketrefunded.NewUpdateOpsBooking,
 
 		// HTTP handlers
 		pubSubRouter.NewRouter,

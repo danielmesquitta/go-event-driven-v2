@@ -6,6 +6,9 @@ import (
 	"tickets/internal/app/pubsub/handler/bookingconfirmed"
 	"tickets/internal/app/pubsub/handler/bookingmade"
 	"tickets/internal/app/pubsub/handler/refundticket"
+	"tickets/internal/app/pubsub/handler/ticketprinted"
+	"tickets/internal/app/pubsub/handler/ticketreceiptissued"
+	"tickets/internal/app/pubsub/handler/ticketrefunded"
 	pubSubMiddleware "tickets/internal/app/pubsub/middleware"
 	"tickets/internal/pkg/log"
 	"tickets/internal/provider/cmdbus"
@@ -18,16 +21,21 @@ import (
 )
 
 type Router struct {
-	eventBus                               eventbus.EventBus
-	cmdBus                                 cmdbus.CommandBus
-	appendCanceledBookingToTrackerHandler  *bookingcanceled.AppendToTracker
-	appendConfirmedBookingToTrackerHandler *bookingconfirmed.AppendToTracker
-	issueReceiptHandler                    *bookingconfirmed.IssueReceipt
-	createTicketHandler                    *bookingconfirmed.CreateTicket
-	deleteTicketHandler                    *bookingcanceled.DeleteTicket
-	printTicketHandler                     *bookingconfirmed.PrintTicket
-	postTicketBookingToDeadNationHandler   *bookingmade.PostTicketBookingToDeadNation
-	refundTicketHandler                    *refundticket.RefundTicket
+	eventBus                                     eventbus.EventBus
+	cmdBus                                       cmdbus.CommandBus
+	appendCanceledBookingToTrackerHandler        *bookingcanceled.AppendToTracker
+	appendConfirmedBookingToTrackerHandler       *bookingconfirmed.AppendToTracker
+	issueReceiptHandler                          *bookingconfirmed.IssueReceipt
+	createTicketHandler                          *bookingconfirmed.CreateTicket
+	deleteTicketHandler                          *bookingcanceled.DeleteTicket
+	printTicketHandler                           *bookingconfirmed.PrintTicket
+	postTicketBookingToDeadNationHandler         *bookingmade.PostTicketBookingToDeadNation
+	refundTicketHandler                          *refundticket.RefundTicket
+	updateOpsBookingOnBookingConfirmedHandler    *bookingconfirmed.UpdateOpsBooking
+	createOpsBookingHandler                      *bookingmade.CreateOpsBooking
+	updateOpsBookingOnTicketRefundedHandler      *ticketrefunded.UpdateOpsBooking
+	updateOpsBookingOnTicketPrintedHandler       *ticketprinted.UpdateOpsBooking
+	updateOpsBookingOnTicketReceiptIssuedHandler *ticketreceiptissued.UpdateOpsBooking
 }
 
 func NewRouter(
@@ -41,18 +49,28 @@ func NewRouter(
 	printTicketHandler *bookingconfirmed.PrintTicket,
 	postTicketBookingToDeadNationHandler *bookingmade.PostTicketBookingToDeadNation,
 	refundTicketHandler *refundticket.RefundTicket,
+	updateOpsBookingOnBookingConfirmedHandler *bookingconfirmed.UpdateOpsBooking,
+	createOpsBookingHandler *bookingmade.CreateOpsBooking,
+	updateOpsBookingOnTicketRefundedHandler *ticketrefunded.UpdateOpsBooking,
+	updateOpsBookingOnTicketPrintedHandler *ticketprinted.UpdateOpsBooking,
+	updateOpsBookingOnTicketReceiptIssuedHandler *ticketreceiptissued.UpdateOpsBooking,
 ) *Router {
 	return &Router{
-		eventBus:                               eventBus,
-		cmdBus:                                 cmdBus,
-		appendCanceledBookingToTrackerHandler:  appendCanceledBookingToTrackerHandler,
-		appendConfirmedBookingToTrackerHandler: appendConfirmedBookingToTrackerHandler,
-		issueReceiptHandler:                    issueReceiptHandler,
-		createTicketHandler:                    createTicketHandler,
-		deleteTicketHandler:                    deleteTicketHandler,
-		printTicketHandler:                     printTicketHandler,
-		postTicketBookingToDeadNationHandler:   postTicketBookingToDeadNationHandler,
-		refundTicketHandler:                    refundTicketHandler,
+		eventBus:                                     eventBus,
+		cmdBus:                                       cmdBus,
+		appendCanceledBookingToTrackerHandler:        appendCanceledBookingToTrackerHandler,
+		appendConfirmedBookingToTrackerHandler:       appendConfirmedBookingToTrackerHandler,
+		issueReceiptHandler:                          issueReceiptHandler,
+		createTicketHandler:                          createTicketHandler,
+		deleteTicketHandler:                          deleteTicketHandler,
+		printTicketHandler:                           printTicketHandler,
+		postTicketBookingToDeadNationHandler:         postTicketBookingToDeadNationHandler,
+		refundTicketHandler:                          refundTicketHandler,
+		updateOpsBookingOnBookingConfirmedHandler:    updateOpsBookingOnBookingConfirmedHandler,
+		createOpsBookingHandler:                      createOpsBookingHandler,
+		updateOpsBookingOnTicketRefundedHandler:      updateOpsBookingOnTicketRefundedHandler,
+		updateOpsBookingOnTicketPrintedHandler:       updateOpsBookingOnTicketPrintedHandler,
+		updateOpsBookingOnTicketReceiptIssuedHandler: updateOpsBookingOnTicketReceiptIssuedHandler,
 	}
 }
 
@@ -92,12 +110,32 @@ func (r *Router) Run(
 		r.createTicketHandler.Handle,
 		r.printTicketHandler.Handle,
 		r.issueReceiptHandler.Handle,
+		r.updateOpsBookingOnBookingConfirmedHandler.Handle,
 	)
 
 	// event.BookingMade
 	registerEventHandlers(
 		r.eventBus,
 		r.postTicketBookingToDeadNationHandler.Handle,
+		r.createOpsBookingHandler.Handle,
+	)
+
+	// event.TicketRefunded
+	registerEventHandlers(
+		r.eventBus,
+		r.updateOpsBookingOnTicketRefundedHandler.Handle,
+	)
+
+	// event.TicketPrinted
+	registerEventHandlers(
+		r.eventBus,
+		r.updateOpsBookingOnTicketPrintedHandler.Handle,
+	)
+
+	// event.TicketReceiptIssued
+	registerEventHandlers(
+		r.eventBus,
+		r.updateOpsBookingOnTicketReceiptIssuedHandler.Handle,
 	)
 
 	// cmd.RefundTicket

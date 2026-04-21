@@ -13,8 +13,12 @@ import (
 	"tickets/internal/app/pubsub/handler/bookingconfirmed"
 	"tickets/internal/app/pubsub/handler/bookingmade"
 	"tickets/internal/app/pubsub/handler/refundticket"
+	"tickets/internal/app/pubsub/handler/ticketprinted"
+	"tickets/internal/app/pubsub/handler/ticketreceiptissued"
+	"tickets/internal/app/pubsub/handler/ticketrefunded"
 	router2 "tickets/internal/app/pubsub/router"
 	"tickets/internal/domain/usecase/booking"
+	"tickets/internal/domain/usecase/opsbooking"
 	"tickets/internal/domain/usecase/show"
 	"tickets/internal/domain/usecase/ticket"
 	"tickets/internal/domain/usecase/tracker"
@@ -51,7 +55,7 @@ func New() Service {
 	sqlxTransaction := tx.NewSqlxTransaction(sqlxDB)
 	bookingRepo := pg.NewBookingRepo(dbDB)
 	outbox := pg2.New(dbDB, eventBus)
-	bookingCreate := booking.NewCreate(sqlxTransaction, showRepo, bookingRepo, dbDB, outbox)
+	bookingCreate := booking.NewCreate(sqlxTransaction, showRepo, bookingRepo, outbox)
 	bookingHandler := handler.NewBookingHandler(bookingCreate)
 	echo := router.New(showHandler, ticketHandler, healthHandler, bookingHandler)
 	clients := gateway.NewGateway()
@@ -76,7 +80,14 @@ func New() Service {
 	paymentsvcClient := paymentsvc.NewClient(clients)
 	refund := ticket.NewRefund(receiptsvcClient, paymentsvcClient, eventBus)
 	refundTicket := refundticket.NewRefundTicket(refund)
-	routerRouter := router2.NewRouter(eventBus, commandBus, appendToTracker, bookingconfirmedAppendToTracker, bookingconfirmedIssueReceipt, createTicket, deleteTicket, printTicket, bookingmadePostTicketBookingToDeadNation, refundTicket)
+	updateOpsBooking := bookingconfirmed.NewUpdateOpsBooking(ticketPrint)
+	opsBooking := pg.NewOpsBooking(dbDB)
+	opsbookingCreate := opsbooking.NewCreate(sqlxTransaction, opsBooking)
+	createOpsBooking := bookingmade.NewCreateOpsBooking(opsbookingCreate)
+	ticketrefundedUpdateOpsBooking := ticketrefunded.NewUpdateOpsBooking()
+	ticketprintedUpdateOpsBooking := ticketprinted.NewUpdateOpsBooking()
+	ticketreceiptissuedUpdateOpsBooking := ticketreceiptissued.NewUpdateOpsBooking()
+	routerRouter := router2.NewRouter(eventBus, commandBus, appendToTracker, bookingconfirmedAppendToTracker, bookingconfirmedIssueReceipt, createTicket, deleteTicket, printTicket, bookingmadePostTicketBookingToDeadNation, refundTicket, updateOpsBooking, createOpsBooking, ticketrefundedUpdateOpsBooking, ticketprintedUpdateOpsBooking, ticketreceiptissuedUpdateOpsBooking)
 	service := Service{
 		db:           dbDB,
 		httpRouter:   echo,
