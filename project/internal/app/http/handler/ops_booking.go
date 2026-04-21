@@ -2,11 +2,17 @@ package handler
 
 import (
 	"net/http"
+	"time"
+
 	"tickets/internal/domain/entity"
+	"tickets/internal/domain/errs"
 	"tickets/internal/domain/usecase/opsbooking"
 
 	"github.com/labstack/echo/v4"
 )
+
+const receiptIssueDateParam = "receipt_issue_date"
+const receiptIssueDateLayout = "2006-01-02"
 
 type OpsBookingHandler struct {
 	listOpsBookingsUseCase *opsbooking.List
@@ -24,7 +30,22 @@ func NewOpsBookingHandler(
 }
 
 func (h *OpsBookingHandler) ListOpsBookings(c echo.Context) error {
-	bookings, err := h.listOpsBookingsUseCase.Execute(c.Request().Context())
+	input := opsbooking.ListInput{}
+
+	if raw := c.QueryParam(receiptIssueDateParam); raw != "" {
+		date, err := time.Parse(receiptIssueDateLayout, raw)
+		if err != nil {
+			return errs.ErrInvalidFormat.New(errs.WithMetadata(
+				errs.MetadataErrorsKey,
+				map[string]string{
+					receiptIssueDateParam: "must be a date in YYYY-MM-DD format",
+				},
+			))
+		}
+		input.ReceiptIssueDate = &date
+	}
+
+	bookings, err := h.listOpsBookingsUseCase.Execute(c.Request().Context(), input)
 	if err != nil {
 		return err
 	}

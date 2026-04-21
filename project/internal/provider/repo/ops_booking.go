@@ -12,11 +12,19 @@ type CreateOpsBookingInput struct {
 	BookedAt  time.Time `json:"booked_at"  validate:"required"`
 }
 
+// ListOpsBookingsFilter narrows the results of OpsBookingRepo.List.
+// Zero-value fields are ignored, so an empty filter returns every booking.
+type ListOpsBookingsFilter struct {
+	// ReceiptIssueDate matches bookings that contain at least one ticket
+	// whose receipt was issued on this date (time component ignored).
+	ReceiptIssueDate *time.Time
+}
+
 type OpsBookingRepo interface {
 	Create(ctx context.Context, in CreateOpsBookingInput) error
 	GetByBookingID(ctx context.Context, bookingID string) (*entity.OpsBooking, error)
 	GetByTicketID(ctx context.Context, ticketID string) (*entity.OpsBooking, error)
-	List(ctx context.Context) ([]entity.OpsBooking, error)
+	List(ctx context.Context, filter ListOpsBookingsFilter) ([]entity.OpsBooking, error)
 
 	// UpdateByBookingID atomically updates the read model identified by booking ID.
 	// The update function receives the current state and returns the updated one.

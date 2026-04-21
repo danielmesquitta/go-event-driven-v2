@@ -75,11 +75,29 @@ func (r *OpsBooking) GetByTicketID(ctx context.Context, ticketID string) (*entit
 	return &op, nil
 }
 
-func (r *OpsBooking) List(ctx context.Context) ([]entity.OpsBooking, error) {
+func (r *OpsBooking) List(ctx context.Context, filter repo.ListOpsBookingsFilter) ([]entity.OpsBooking, error) {
+	query := `SELECT payload FROM read_model_ops_bookings`
+	var args []any
+
+	if filter.ReceiptIssueDate != nil {
+		// Extract every receipt_issued_at value from the embedded tickets,
+		// cast it to DATE, and keep only bookings that have at least one
+		// receipt issued on the requested day.
+		query += `
+			WHERE booking_id IN (
+				SELECT booking_id FROM (
+					SELECT booking_id,
+						DATE(jsonb_path_query(payload, '$.tickets.*.receipt_issued_at')::text) AS receipt_issued_at
+					FROM
+						read_model_ops_bookings
+				) bookings_within_date
+				WHERE receipt_issued_at = $1
+			)`
+		args = append(args, filter.ReceiptIssueDate.Format("2006-01-02"))
+	}
+
 	var payloads [][]byte
-	err := r.db.WithTx(ctx).SelectContext(ctx, &payloads, `
-		SELECT payload FROM read_model_ops_bookings
-	`)
+	err := r.db.WithTx(ctx).SelectContext(ctx, &payloads, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list ops bookings: %w", err)
 	}
