@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -15,21 +14,18 @@ import (
 )
 
 type AlertTriggered struct {
-	AlertID      string    `json:"alert_id"`
-	AlertVersion int       `json:"alert_version"`
-	TriggeredAt  time.Time `json:"triggered_at"`
+	AlertID     string    `json:"alert_id"`
+	TriggeredAt time.Time `json:"triggered_at"`
 }
 
 type AlertResolved struct {
-	AlertID      string    `json:"alert_id"`
-	AlertVersion int       `json:"alert_version"`
-	ResolvedAt   time.Time `json:"resolved_at"`
+	AlertID    string    `json:"alert_id"`
+	ResolvedAt time.Time `json:"resolved_at"`
 }
 
 type AlertUpdated struct {
-	AlertID          string `json:"alert_id"`
-	IsTriggered      bool   `json:"is_triggered"`
-	LastAlertVersion int    `json:"last_alert_version"`
+	AlertID     string `json:"alert_id"`
+	IsTriggered bool   `json:"is_triggered"`
 }
 
 func main() {
@@ -104,15 +100,7 @@ func main() {
 				}
 			}
 
-			if event.AlertVersion != alert.LastAlertVersion+1 {
-				return fmt.Errorf(
-					"unexpected alert version: got %d, expected %d",
-					event.AlertVersion, alert.LastAlertVersion+1,
-				)
-			}
-
 			alert.IsTriggered = true
-			alert.LastAlertVersion = event.AlertVersion
 			alerts[event.AlertID] = alert
 
 			return eventBus.Publish(ctx, alert)
@@ -128,15 +116,7 @@ func main() {
 				}
 			}
 
-			if event.AlertVersion != alert.LastAlertVersion+1 {
-				return fmt.Errorf(
-					"unexpected alert version: got %d, expected %d",
-					event.AlertVersion, alert.LastAlertVersion+1,
-				)
-			}
-
 			alert.IsTriggered = false
-			alert.LastAlertVersion = event.AlertVersion
 			alerts[event.AlertID] = alert
 
 			return eventBus.Publish(ctx, alert)
