@@ -13,6 +13,7 @@ func New(
 	ticketHandler *handler.TicketHandler,
 	healthHandler *handler.HealthHandler,
 	bookingHandler *handler.BookingHandler,
+	opsBookingHandler *handler.OpsBookingHandler,
 ) *echo.Echo {
 	e := libHTTP.NewEcho()
 
@@ -31,6 +32,9 @@ func New(
 	e.PUT("/ticket-refund/:ticket_id", ticketHandler.TicketRefund)
 
 	e.POST("/book-tickets", bookingHandler.CreateBooking)
+
+	e.GET("/ops/bookings", opsBookingHandler.ListOpsBookings)
+	e.GET("/ops/bookings/:id", opsBookingHandler.GetOpsBooking)
 
 	return e
 }

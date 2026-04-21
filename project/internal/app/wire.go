@@ -99,6 +99,8 @@ func New() Service {
 		opsbooking.NewOnTicketPrinted,
 		opsbooking.NewOnTicketReceiptIssued,
 		opsbooking.NewOnTicketRefunded,
+		opsbooking.NewList,
+		opsbooking.NewGet,
 
 		// PubSub handlers
 		bookingcanceled.NewAppendToTracker,
@@ -122,6 +124,7 @@ func New() Service {
 		handler.NewTicketHandler,
 		handler.NewHealthHandler,
 		handler.NewBookingHandler,
+		handler.NewOpsBookingHandler,
 
 		wire.Struct(new(Service), "*"),
 	)

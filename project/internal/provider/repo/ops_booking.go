@@ -16,6 +16,7 @@ type OpsBookingRepo interface {
 	Create(ctx context.Context, in CreateOpsBookingInput) error
 	GetByBookingID(ctx context.Context, bookingID string) (*entity.OpsBooking, error)
 	GetByTicketID(ctx context.Context, ticketID string) (*entity.OpsBooking, error)
+	List(ctx context.Context) ([]entity.OpsBooking, error)
 
 	// UpdateByBookingID atomically updates the read model identified by booking ID.
 	// The update function receives the current state and returns the updated one.

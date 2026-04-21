@@ -75,6 +75,27 @@ func (r *OpsBooking) GetByTicketID(ctx context.Context, ticketID string) (*entit
 	return &op, nil
 }
 
+func (r *OpsBooking) List(ctx context.Context) ([]entity.OpsBooking, error) {
+	var payloads [][]byte
+	err := r.db.WithTx(ctx).SelectContext(ctx, &payloads, `
+		SELECT payload FROM read_model_ops_bookings
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list ops bookings: %w", err)
+	}
+
+	result := make([]entity.OpsBooking, 0, len(payloads))
+	for _, payload := range payloads {
+		op, err := unmarshalOpsBooking(payload)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, op)
+	}
+
+	return result, nil
+}
+
 func (r *OpsBooking) GetByBookingID(ctx context.Context, bookingID string) (*entity.OpsBooking, error) {
 	var payload []byte
 	err := r.db.WithTx(ctx).GetContext(ctx, &payload, `
