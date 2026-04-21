@@ -40,12 +40,18 @@ func main() {
 				return "events", nil
 			},
 			SubscriberConstructor: func(params cqrs.EventGroupProcessorSubscriberConstructorParams) (message.Subscriber, error) {
-				return kafka.NewSubscriber(kafka.SubscriberConfig{
-					Brokers:               []string{kafkaAddr},
-					Unmarshaler:           kafka.DefaultMarshaler{},
-					ConsumerGroup:         params.EventGroupName,
+				sub, err := kafka.NewSubscriber(kafka.SubscriberConfig{
+					Brokers:                []string{kafkaAddr},
+					Unmarshaler:            kafka.DefaultMarshaler{},
+					ConsumerGroup:          params.EventGroupName,
+					InitializeTopicDetails: &sarama.TopicDetail{NumPartitions: 2, ReplicationFactor: 1},
+					// Make sure to use this config: it lets us validate your solution!
 					OverwriteSaramaConfig: newConfig(),
 				}, logger)
+				if err != nil {
+					panic(err)
+				}
+				return sub, nil
 			},
 			AckOnUnknownEvent: true,
 			Marshaler:         cqrs.JSONMarshaler{},
@@ -58,7 +64,7 @@ func main() {
 
 	pub, err := kafka.NewPublisher(kafka.PublisherConfig{
 		Brokers:   []string{kafkaAddr},
-		Marshaler: kafka.DefaultMarshaler{},
+		Marshaler: nil, // TODO
 	}, logger)
 	if err != nil {
 		panic(err)
@@ -83,9 +89,9 @@ func main() {
 	}
 
 	err = eventProcessor.AddHandlersGroup(
-		"game",
-		cqrs.NewGroupEventHandler(gameHandler.HandlePlayerJoined),
-		cqrs.NewGroupEventHandler(gameHandler.HandlePlayerLeft),
+		"players",
+		cqrs.NewEventHandler("PlayerJoined", gameHandler.HandlePlayerJoined),
+		cqrs.NewEventHandler("PlayerLeft", gameHandler.HandlePlayerLeft),
 	)
 	if err != nil {
 		panic(err)
