@@ -2,21 +2,24 @@ package bookingconfirmed
 
 import (
 	"context"
+
 	"tickets/internal/app/pubsub/message/event"
-	"tickets/internal/domain/usecase/ticket"
+	"tickets/internal/domain/usecase/opsbooking"
 )
 
 type UpdateOpsBooking struct {
-	printTicketUseCase *ticket.Print
+	useCase *opsbooking.OnTicketBookingConfirmed
 }
 
-func NewUpdateOpsBooking(printTicketUseCase *ticket.Print) *UpdateOpsBooking {
-	return &UpdateOpsBooking{printTicketUseCase: printTicketUseCase}
+func NewUpdateOpsBooking(useCase *opsbooking.OnTicketBookingConfirmed) *UpdateOpsBooking {
+	return &UpdateOpsBooking{useCase: useCase}
 }
 
-func (p *UpdateOpsBooking) Handle(ctx context.Context, event *event.TicketBookingConfirmed) error {
-	return p.printTicketUseCase.Execute(ctx, ticket.PrintInput{
-		TicketID: event.TicketID,
-		Price:    event.Price,
+func (h *UpdateOpsBooking) Handle(ctx context.Context, e *event.TicketBookingConfirmed) error {
+	return h.useCase.Execute(ctx, opsbooking.OnTicketBookingConfirmedInput{
+		BookingID:     e.BookingID,
+		TicketID:      e.TicketID,
+		CustomerEmail: e.CustomerEmail,
+		Price:         e.Price,
 	})
 }

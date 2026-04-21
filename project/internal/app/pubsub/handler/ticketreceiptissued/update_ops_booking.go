@@ -2,22 +2,23 @@ package ticketreceiptissued
 
 import (
 	"context"
+
 	"tickets/internal/app/pubsub/message/event"
+	"tickets/internal/domain/usecase/opsbooking"
 )
 
 type UpdateOpsBooking struct {
+	useCase *opsbooking.OnTicketReceiptIssued
 }
 
-func NewUpdateOpsBooking() *UpdateOpsBooking {
-	return &UpdateOpsBooking{}
+func NewUpdateOpsBooking(useCase *opsbooking.OnTicketReceiptIssued) *UpdateOpsBooking {
+	return &UpdateOpsBooking{useCase: useCase}
 }
 
-func (c *UpdateOpsBooking) Handle(ctx context.Context, e *event.TicketRefunded) error {
-	// err := c.refundTicketUseCase.Execute(ctx, ticket.RefundInput{
-	// 	TicketID: cmd.TicketID,
-	// })
-	// if err != nil {
-	// 	return err
-	// }
-	return nil
+func (h *UpdateOpsBooking) Handle(ctx context.Context, e *event.TicketReceiptIssued) error {
+	return h.useCase.Execute(ctx, opsbooking.OnTicketReceiptIssuedInput{
+		TicketID:      e.TicketID,
+		ReceiptNumber: e.ReceiptNumber,
+		IssuedAt:      e.IssuedAt,
+	})
 }

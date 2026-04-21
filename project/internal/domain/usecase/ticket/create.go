@@ -19,6 +19,7 @@ type CreateInput struct {
 	TicketID      string       `json:"ticket_id" validate:"required"`
 	Price         entity.Money `json:"price" validate:"required"`
 	CustomerEmail string       `json:"customer_email" validate:"required"`
+	BookingID     string       `json:"booking_id" validate:"required"`
 }
 
 func (c *Create) Execute(ctx context.Context, in CreateInput) error {
@@ -31,6 +32,7 @@ func (c *Create) Execute(ctx context.Context, in CreateInput) error {
 		ID:            in.TicketID,
 		Price:         in.Price,
 		CustomerEmail: in.CustomerEmail,
+		BookingID:     in.BookingID,
 	})
 	if err != nil {
 		return err

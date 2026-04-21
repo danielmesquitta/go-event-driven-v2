@@ -2,22 +2,23 @@ package ticketprinted
 
 import (
 	"context"
+
 	"tickets/internal/app/pubsub/message/event"
+	"tickets/internal/domain/usecase/opsbooking"
 )
 
 type UpdateOpsBooking struct {
+	useCase *opsbooking.OnTicketPrinted
 }
 
-func NewUpdateOpsBooking() *UpdateOpsBooking {
-	return &UpdateOpsBooking{}
+func NewUpdateOpsBooking(useCase *opsbooking.OnTicketPrinted) *UpdateOpsBooking {
+	return &UpdateOpsBooking{useCase: useCase}
 }
 
-func (c *UpdateOpsBooking) Handle(ctx context.Context, e *event.TicketRefunded) error {
-	// err := c.refundTicketUseCase.Execute(ctx, ticket.RefundInput{
-	// 	TicketID: cmd.TicketID,
-	// })
-	// if err != nil {
-	// 	return err
-	// }
-	return nil
+func (h *UpdateOpsBooking) Handle(ctx context.Context, e *event.TicketPrinted) error {
+	return h.useCase.Execute(ctx, opsbooking.OnTicketPrintedInput{
+		TicketID:  e.TicketID,
+		FileName:  e.FileName,
+		PrintedAt: e.Header.PublishedAt,
+	})
 }

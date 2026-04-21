@@ -95,6 +95,10 @@ func New() Service {
 		booking.NewCreate,
 		booking.NewPostTicketBookingToDeadNation,
 		opsbooking.NewCreate,
+		opsbooking.NewOnTicketBookingConfirmed,
+		opsbooking.NewOnTicketPrinted,
+		opsbooking.NewOnTicketReceiptIssued,
+		opsbooking.NewOnTicketRefunded,
 
 		// PubSub handlers
 		bookingcanceled.NewAppendToTracker,

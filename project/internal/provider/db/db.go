@@ -45,8 +45,11 @@ func (d *DB) InitializeSchema(ctx context.Context) error {
 			id UUID PRIMARY KEY,
 			price_amount   NUMERIC(10, 2) NOT NULL,
 			price_currency CHAR(3) NOT NULL,
-			customer_email VARCHAR(255) NOT NULL
+			customer_email VARCHAR(255) NOT NULL,
+			booking_id     UUID NOT NULL
 		);
+
+		ALTER TABLE tickets ADD COLUMN IF NOT EXISTS booking_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000';
 
 		CREATE TABLE IF NOT EXISTS shows (
 			id UUID PRIMARY KEY,

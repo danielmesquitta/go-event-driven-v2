@@ -19,6 +19,7 @@ func (c *CreateTicket) Handle(ctx context.Context, event *event.TicketBookingCon
 		TicketID:      event.TicketID,
 		Price:         event.Price,
 		CustomerEmail: event.CustomerEmail,
+		BookingID:     event.BookingID,
 	})
 	if err != nil {
 		return err

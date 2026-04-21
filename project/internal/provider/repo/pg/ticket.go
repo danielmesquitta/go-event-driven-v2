@@ -24,14 +24,15 @@ type Ticket struct {
 	PriceAmount   string `db:"price_amount"`
 	PriceCurrency string `db:"price_currency"`
 	CustomerEmail string `db:"customer_email"`
+	BookingID     string `db:"booking_id"`
 }
 
 func (r *TicketRepo) Create(ctx context.Context, ticket *entity.Ticket) error {
 	_, err := r.db.WithTx(ctx).ExecContext(ctx, `
-		INSERT INTO tickets (id, price_amount, price_currency, customer_email)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO tickets (id, price_amount, price_currency, customer_email, booking_id)
+		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT DO NOTHING
-	`, ticket.ID, ticket.Price.Amount, ticket.Price.Currency, ticket.CustomerEmail)
+	`, ticket.ID, ticket.Price.Amount, ticket.Price.Currency, ticket.CustomerEmail, ticket.BookingID)
 	if err != nil {
 		return fmt.Errorf("failed to create ticket: %w", err)
 	}
@@ -60,6 +61,7 @@ func (r *TicketRepo) Get(ctx context.Context, id string) (*entity.Ticket, error)
 			Currency: ticket.PriceCurrency,
 		},
 		CustomerEmail: ticket.CustomerEmail,
+		BookingID:     ticket.BookingID,
 	}, nil
 }
 
@@ -82,6 +84,7 @@ func (r *TicketRepo) List(ctx context.Context) ([]entity.Ticket, error) {
 				Currency: ticket.PriceCurrency,
 			},
 			CustomerEmail: ticket.CustomerEmail,
+			BookingID:     ticket.BookingID,
 		}
 	}
 

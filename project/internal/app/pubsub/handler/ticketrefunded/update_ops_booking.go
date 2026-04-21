@@ -2,22 +2,21 @@ package ticketrefunded
 
 import (
 	"context"
+
 	"tickets/internal/app/pubsub/message/event"
+	"tickets/internal/domain/usecase/opsbooking"
 )
 
 type UpdateOpsBooking struct {
+	useCase *opsbooking.OnTicketRefunded
 }
 
-func NewUpdateOpsBooking() *UpdateOpsBooking {
-	return &UpdateOpsBooking{}
+func NewUpdateOpsBooking(useCase *opsbooking.OnTicketRefunded) *UpdateOpsBooking {
+	return &UpdateOpsBooking{useCase: useCase}
 }
 
-func (c *UpdateOpsBooking) Handle(ctx context.Context, e *event.TicketRefunded) error {
-	// err := c.refundTicketUseCase.Execute(ctx, ticket.RefundInput{
-	// 	TicketID: cmd.TicketID,
-	// })
-	// if err != nil {
-	// 	return err
-	// }
-	return nil
+func (h *UpdateOpsBooking) Handle(ctx context.Context, e *event.TicketRefunded) error {
+	return h.useCase.Execute(ctx, opsbooking.OnTicketRefundedInput{
+		TicketID: e.TicketID,
+	})
 }
