@@ -1,4 +1,4 @@
-exercise_id = "9db2410c-e147-4db7-a963-fcc4ff4693d2"
-directory = "14-message-ordering/01-ordering"
-is_text_only = true
+exercise_id = "b42cdbe3-04b4-42e2-8bea-f7b7a7d4f8a0"
+directory = "14-message-ordering/02-one-topic"
+is_text_only = false
 is_optional = false
