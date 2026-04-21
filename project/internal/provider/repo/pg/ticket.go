@@ -20,11 +20,12 @@ func NewTicketRepo(db *db.DB) *TicketRepo {
 }
 
 type Ticket struct {
-	ID            string `db:"id"`
-	PriceAmount   string `db:"price_amount"`
-	PriceCurrency string `db:"price_currency"`
-	CustomerEmail string `db:"customer_email"`
-	BookingID     string `db:"booking_id"`
+	ID            string       `db:"id"`
+	PriceAmount   string       `db:"price_amount"`
+	PriceCurrency string       `db:"price_currency"`
+	CustomerEmail string       `db:"customer_email"`
+	BookingID     string       `db:"booking_id"`
+	DeletedAt     sql.NullTime `db:"deleted_at"`
 }
 
 func (r *TicketRepo) Create(ctx context.Context, ticket *entity.Ticket) error {
@@ -44,7 +45,7 @@ func (r *TicketRepo) Get(ctx context.Context, id string) (*entity.Ticket, error)
 	err := r.db.WithTx(ctx).GetContext(ctx, &ticket, `
 		SELECT *
 		FROM tickets
-		WHERE id = $1
+		WHERE id = $1 AND deleted_at IS NULL
 		LIMIT 1
 	`, id)
 	if err != nil {
@@ -70,6 +71,7 @@ func (r *TicketRepo) List(ctx context.Context) ([]entity.Ticket, error) {
 	err := r.db.WithTx(ctx).SelectContext(ctx, &tickets, `
 		SELECT *
 		FROM tickets
+		WHERE deleted_at IS NULL
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list tickets: %w", err)
@@ -93,14 +95,30 @@ func (r *TicketRepo) List(ctx context.Context) ([]entity.Ticket, error) {
 	return entities, nil
 }
 
+// Delete performs a soft delete by setting deleted_at to the current timestamp.
+// Returns an error when the ticket does not exist, so TicketBookingCanceled
+// events that arrive before the corresponding TicketBookingConfirmed can be
+// nacked and redelivered once the ticket exists.
+// Re-running the update on an already soft-deleted ticket still matches the
+// row, keeping the operation idempotent for redeliveries.
 func (r *TicketRepo) Delete(ctx context.Context, id string) error {
-	_, err := r.db.WithTx(ctx).ExecContext(ctx, `
-		DELETE FROM tickets
+	res, err := r.db.WithTx(ctx).ExecContext(ctx, `
+		UPDATE tickets
+		SET deleted_at = now()
 		WHERE id = $1
 	`, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete ticket: %w", err)
 	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected when deleting ticket: %w", err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("ticket with id %s not found", id)
+	}
+
 	return nil
 }
 

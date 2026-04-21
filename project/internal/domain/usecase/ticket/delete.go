@@ -24,18 +24,10 @@ func (c *Delete) Execute(ctx context.Context, in DeleteInput) error {
 		return err
 	}
 
-	ticket, err := c.ticketRepo.Get(ctx, in.TicketID)
-	if err != nil {
-		return err
-	}
-	if ticket == nil {
-		return nil
-	}
-
-	err = c.ticketRepo.Delete(ctx, in.TicketID)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	// The repository performs a soft delete and returns an error when the ticket
+	// does not exist yet. That way, if TicketBookingCanceled arrives before
+	// TicketBookingConfirmed, the message is nacked and redelivered later.
+	// For redeliveries of an already soft-deleted ticket, the UPDATE still
+	// matches the row, so the operation stays idempotent.
+	return c.ticketRepo.Delete(ctx, in.TicketID)
 }
