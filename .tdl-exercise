@@ -1,4 +1,4 @@
-exercise_id = "68978355-86eb-4b3f-bd94-cf99868cf5fa"
-directory = "project"
-is_text_only = false
-is_optional = false
+exercise_id = "c31236ce-b4a3-4859-bc47-d34addf14c9b"
+directory = "15-data-lake/01-data-lake"
+is_text_only = true
+is_optional = true
